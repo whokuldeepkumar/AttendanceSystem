@@ -1,0 +1,171 @@
+<div class="container report-container">
+
+  <!-- Header with Export Options -->
+  <div class="glass-card header-card mb-4">
+    <div class="header-content">
+      <button class="btn btn-secondary" (click)="goBack()">← Back</button>
+      <h2>Reports & Management</h2>
+      <div class="export-actions">
+        <button class="btn btn-secondary" (click)="openManualModal()">＋ Add Manual Entry</button>
+        <!-- <button class="btn btn-outline" (click)="openMarkModal('leave')">📋 Mark Leave</button>
+        <button class="btn btn-outline" (click)="openMarkModal('sat-off')">📅 Sat Off</button>
+        <button class="btn btn-outline" (click)="openMarkModal('sun-off')">📅 Sun Off</button> -->
+        <button class="btn btn-primary" (click)="export()" [disabled]="isExporting()">
+          <span *ngIf="!isExporting()">📅 Export Month</span>
+          <span *ngIf="isExporting()">Exporting...</span>
+        </button>
+        <button class="btn btn-secondary" (click)="exportAll()" [disabled]="isExporting()">
+          <span *ngIf="!isExporting()">📊 Export All</span>
+          <span *ngIf="isExporting()">Exporting...</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Manual Entry Modal -->
+  <app-modal
+    [isOpen]="showManualModal()"
+    title="Add Manual Attendance"
+    message="Provide In/Out times for the selected date (times are optional but at least one is required)."
+    confirmText="Save"
+    cancelText="Cancel"
+    (confirmed)="confirmManualEntry()"
+    (cancelled)="showManualModal.set(false)"
+  >
+  <div class="manual-modal-body">
+    <div class="manual-form">
+    <div class="form-row">
+      <label for="manualDate">Date</label>
+      <input id="manualDate" type="date" class="glass-input" [ngModel]="manualDate()" (ngModelChange)="manualDate.set($event)" name="manualDate">
+    </div>
+
+    <div class="form-row">
+      <label for="manualIn">In Time</label>
+      <div class="time-input-group">
+        <input id="manualIn" type="number" min="1" max="12" placeholder="HH" class="glass-input time-number" [ngModel]="manualIn()" (ngModelChange)="manualIn.set($event)" name="manualIn">
+        <span class="time-separator">:</span>
+        <input id="manualInMin" type="number" min="0" max="59" placeholder="MM" class="glass-input time-number" [ngModel]="manualInMin()" (ngModelChange)="manualInMin.set($event)" name="manualInMin">
+        <select class="glass-input period-select" [ngModel]="manualInPeriod()" (ngModelChange)="manualInPeriod.set($event)" name="manualInPeriod">
+          <option value="AM">AM</option>
+          <option value="PM">PM</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="form-row">
+      <label for="manualOut">Out Time</label>
+      <div class="time-input-group">
+        <input id="manualOut" type="number" min="1" max="12" placeholder="HH" class="glass-input time-number" [ngModel]="manualOut()" (ngModelChange)="manualOut.set($event)" name="manualOut">
+        <span class="time-separator">:</span>
+        <input id="manualOutMin" type="number" min="0" max="59" placeholder="MM" class="glass-input time-number" [ngModel]="manualOutMin()" (ngModelChange)="manualOutMin.set($event)" name="manualOutMin">
+        <select class="glass-input period-select" [ngModel]="manualOutPeriod()" (ngModelChange)="manualOutPeriod.set($event)" name="manualOutPeriod">
+          <option value="AM">AM</option>
+          <option value="PM">PM</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="form-row manual-mark-buttons">
+      <label>Quick Mark</label>
+      <div class="mark-buttons">
+        <button type="button" class="btn btn-outline" (click)="markFromManual('leave')">📋 Mark Leave</button>
+        <button type="button" class="btn btn-outline" (click)="markFromManual('sat-off')">📅 Sat Off</button>
+        <button type="button" class="btn btn-outline" (click)="markFromManual('sun-off')">📅 Sun Off</button>
+      </div>
+    </div>
+    </div>
+  </div>
+  </app-modal>
+
+  <!-- Mark Day Modal -->
+  <app-modal
+    [isOpen]="showMarkModal()"
+    title="Mark Day"
+    [message]="'Mark ' + (markType() === 'leave' ? 'Leave' : (markType() === 'sat-off' ? 'Saturday Off' : 'Sunday Off')) + ' for ' + (markDate() || '')"
+    confirmText="Confirm"
+    cancelText="Cancel"
+    (confirmed)="confirmMark()"
+    (cancelled)="showMarkModal.set(false)"
+  >
+    <div class="manual-form">
+      <div class="form-row">
+        <label for="markDate">Date</label>
+        <input id="markDate" type="date" class="glass-input" [ngModel]="markDate()" (ngModelChange)="markDate.set($event)" name="markDate">
+      </div>
+      <div class="form-row" *ngIf="markType() === 'leave'">
+        <label for="markReason">Reason (optional)</label>
+        <input id="markReason" type="text" class="glass-input" placeholder="Reason" name="markReason">
+      </div>
+    </div>
+  </app-modal>
+
+  <!-- Attendance Records -->
+  <div class="section">
+    <h3>Attendance Records</h3>
+
+    <!-- Filter Section -->
+    <div class="glass-card filters-card mb-4">
+      <div class="filters">
+        <div class="filter-group">
+          <label for="month">Month</label>
+          <select id="month" class="glass-input filter-select" [ngModel]="selectedMonth()"
+            (ngModelChange)="selectedMonth.set(+$event)">
+            <option *ngFor="let m of months" [value]="m.value">{{ m.label }}</option>
+          </select>
+        </div>
+        <div class="filter-group">
+          <label for="year">Year</label>
+          <select id="year" class="glass-input filter-select" [ngModel]="selectedYear()"
+            (ngModelChange)="selectedYear.set(+$event)">
+            <option *ngFor="let y of years" [value]="y">{{ y }}</option>
+          </select>
+        </div>
+      </div>
+    </div>
+
+    <!-- Records Table -->
+    <div class="glass-card records-card">
+      <div class="records-header">
+        <h4>{{ months[selectedMonth()].label }} {{ selectedYear() }} Records</h4>
+        <span class="record-count">{{ records().length }} days</span>
+      </div>
+
+      <div class="table-wrapper">
+        <table class="report-table">
+          <thead>
+            <tr>
+              <th>Date</th>
+              <th>In Time</th>
+              <th>Out Time</th>
+              <th>Duration</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let record of records()">
+              <td>{{ record.date | date:'mediumDate' }}</td>
+              <td>{{ record.inTime ? (record.inTime | date:'shortTime') : '-' }}</td>
+              <td>{{ record.outTime ? (record.outTime | date:'shortTime') : '-' }}</td>
+              <td>{{ record.duration || '-' }}</td>
+            </tr>
+            <tr *ngIf="records().length === 0" class="no-records">
+              <td colspan="4">
+                No records found for this period.
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- Leave Management Section -->
+  <div class="section">
+    <app-leave-management></app-leave-management>
+  </div>
+
+  <!-- Holiday Management Section -->
+  <div class="section">
+    <app-holiday-management></app-holiday-management>
+  </div>
+
+</div>

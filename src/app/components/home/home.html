@@ -1,0 +1,126 @@
+<div class="container home-container">
+
+  <!-- Attendance Statistics -->
+  <app-attendance-stats [records]="currentMonthRecords()"></app-attendance-stats>
+
+  <!-- Holiday/Leave Notice -->
+  <div *ngIf="todayHolidayName() || todayLeaveStatus()" class="notice-card">
+    <span class="notice-icon">ℹ️</span>
+    <div>
+      <strong>{{ todayHolidayName() || 'On Leave' }}</strong>
+      <p>{{ todayHolidayName() ? 'No attendance required today' : 'You are on approved leave today' }}</p>
+    </div>
+  </div>
+
+  <!-- Actions -->
+  <div class="glass-card actions-card text-center">
+    <h3 class="mb-4">Mark Attendance</h3>
+    
+    <!-- Loading state -->
+    <div *ngIf="isLoading()" class="loading-state">
+      <div class="spinner-small"></div>
+      <p>Processing...</p>
+    </div>
+
+    <!-- Buttons -->
+    <div *ngIf="!isLoading()" class="clock-buttons">
+      <button class="btn btn-primary btn-large" (click)="openClockInModal()" 
+        [disabled]="todayHolidayName() || todayLeaveStatus()"
+        *ngIf="canClockIn()">
+        ↓ CLOCK IN
+      </button>
+      <button class="btn btn-secondary btn-large" (click)="openClockOutModal()"
+        [disabled]="todayHolidayName()"
+        *ngIf="canClockOut()">
+        ↑ CLOCK OUT
+      </button>
+    </div>
+
+    <!-- Mark Options - Always visible -->
+    <div *ngIf="!isLoading() && canShowMarkOptions()" class="mark-options">
+      <button class="btn btn-mark" (click)="openMarkModal('leave')">📋 Mark Leave</button>
+      <button class="btn btn-mark" (click)="openMarkModal('sat-off')">📅 Sat Off</button>
+      <button class="btn btn-mark" (click)="openMarkModal('sun-off')">📅 Sun Off</button>
+    </div>
+
+    <div class="mt-4">
+      <button class="btn btn-report" (click)="goToReport()">
+        📊 View Monthly Reports & Export
+      </button>
+    </div>
+  </div>
+
+  <!-- Recent Attendance -->
+  <div class="glass-card records-card">
+    <h3 class="mb-3">Current Month Attendance</h3>
+    <div class="table-wrapper">
+      <table class="attendance-table">
+        <thead>
+          <tr>
+            <th>Date</th>
+            <th>Day</th>
+            <th>In Time</th>
+            <th>Out Time</th>
+            <th>Duration</th>
+            <th>Action</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let record of currentMonthRecords()" [ngClass]="getDurationStatus(record.duration).isSufficient ? 'duration-sufficient' : 'duration-insufficient'">
+            <td>{{ record.date | date:'mediumDate' }}</td>
+            <td>{{ record.date | date:'EEEE' }}</td>
+            <td>{{ record.inTime ? (record.inTime | date:'shortTime') : '-' }}</td>
+            <td>{{ record.outTime ? (record.outTime | date:'shortTime') : '-' }}</td>
+            <td [ngClass]="getDurationStatus(record.duration).isSufficient ? 'duration-good' : 'duration-bad'">
+              {{ getDurationStatus(record.duration).displayText }}
+            </td>
+            <td>
+              <button class="btn btn-delete btn-sm" (click)="deleteRecord(record.date)" title="Delete record">
+                🗑️ Delete
+              </button>
+            </td>
+          </tr>
+          <tr *ngIf="currentMonthRecords().length === 0" class="no-records">
+            <td colspan="6">
+              No records found for this month.
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+</div>
+
+<!-- Clock In Confirmation Modal -->
+<app-modal
+  [isOpen]="showClockInModal()"
+  title="Clock In Confirmation"
+  message="Are you sure you want to clock in now?"
+  confirmText="Clock In"
+  cancelText="Cancel"
+  (confirmed)="confirmClockIn()"
+  (cancelled)="showClockInModal.set(false)"
+></app-modal>
+
+<!-- Clock Out Confirmation Modal -->
+<app-modal
+  [isOpen]="showClockOutModal()"
+  title="Clock Out Confirmation"
+  message="Are you sure you want to clock out now?"
+  confirmText="Clock Out"
+  cancelText="Cancel"
+  (confirmed)="confirmClockOut()"
+  (cancelled)="showClockOutModal.set(false)"
+></app-modal>
+
+<!-- Mark Day Modal -->
+<app-modal
+  [isOpen]="showMarkModal()"
+  [title]="'Mark as ' + (markType() === 'leave' ? 'Leave' : markType() === 'sat-off' ? 'Saturday Off' : 'Sunday Off')"
+  [message]="'Are you sure you want to mark today as ' + (markType() === 'leave' ? 'leave' : markType() === 'sat-off' ? 'Saturday Off' : 'Sunday Off') + '?'"
+  confirmText="Confirm"
+  cancelText="Cancel"
+  (confirmed)="confirmMark()"
+  (cancelled)="cancelMark()"
+></app-modal>

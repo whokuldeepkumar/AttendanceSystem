@@ -1,0 +1,45 @@
+<div class="login-container">
+  <div class="glass-card login-card">
+    <h2 class="mb-4">Welcome Back</h2>
+
+    <div class="form-group">
+      <label for="name">Full Name</label>
+      <input
+        id="name"
+        type="text"
+        class="glass-input"
+        placeholder="Enter your full name"
+        [ngModel]="name()"
+        (ngModelChange)="name.set($event)"
+        [class.error]="errors()['name']"
+        [disabled]="isLoading()"
+      />
+      <span *ngIf="errors()['name']" class="error-message">{{ errors()['name'] }}</span>
+    </div>
+
+    <div class="form-group">
+      <label for="mobile">Mobile Number</label>
+      <input
+        id="mobile"
+        type="tel"
+        class="glass-input"
+        placeholder="10-digit mobile number"
+        [ngModel]="mobile()"
+        (ngModelChange)="mobile.set($event)"
+        [class.error]="errors()['mobile']"
+        [disabled]="isLoading()"
+        maxlength="10"
+      />
+      <span *ngIf="errors()['mobile']" class="error-message">{{ errors()['mobile'] }}</span>
+    </div>
+
+    <button
+      class="btn btn-primary btn-block mt-4"
+      (click)="login()"
+      [disabled]="isLoading()"
+    >
+      <span *ngIf="!isLoading()">Login / Register</span>
+      <span *ngIf="isLoading()">Logging in...</span>
+    </button>
+  </div>
+</div>
