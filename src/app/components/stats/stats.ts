@@ -1,6 +1,8 @@
 import { Component, Input, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { AttendanceService, AttendanceRecord } from '../../services/attendance.service';
+import { LeaveService } from '../../services/leave.service';
+import { HolidayService } from '../../services/holiday.service';
 
 interface AttendanceStats {
   totalDays: number;
@@ -9,6 +11,11 @@ interface AttendanceStats {
   totalHours: number;
   averageHours: number;
   percentage: number;
+  leaveDays: number;
+  approvedLeaves: number;
+  pendingLeaves: number;
+  satOffDays: number;
+  sunOffDays: number;
 }
 
 @Component({
@@ -19,14 +26,24 @@ interface AttendanceStats {
     <div class="stats-container">
       <h3>Attendance Summary</h3>
       <div class="stats-grid">
+
         <div class="stat-card">
           <div class="stat-label">Present Days</div>
-          <div class="stat-value present">{{ stats().presentDays }}</div>
+          <div class="stat-value present">
+            <div class="present-count">{{ stats().presentDays }}</div>
+            <div class="present-subtext" *ngIf="stats().satOffDays + stats().sunOffDays > 0">+{{ stats().satOffDays + stats().sunOffDays }} Off</div>
+          </div>
         </div>
+
         <div class="stat-card">
           <div class="stat-label">Absent Days</div>
-          <div class="stat-value absent">{{ stats().absentDays }}</div>
+          <div class="stat-value absent">{{ stats().leaveDays }}</div>
+          <!-- <div class="stat-value absent">
+            <div class="absent-count">{{ stats().absentDays }}</div>
+            <div class="absent-subtext">{{ stats().leaveDays }} Leave</div>
+          </div> -->
         </div>
+        
         <div class="stat-card">
           <div class="stat-label">Total Hours</div>
           <div class="stat-value">{{ formatHours(stats().totalHours) }}</div>
@@ -34,6 +51,22 @@ interface AttendanceStats {
         <div class="stat-card">
           <div class="stat-label">Attendance %</div>
           <div class="stat-value percentage">{{ stats().percentage }}%</div>
+        </div>
+      </div>
+
+      <h3 style="margin-top: 24px;">Leave Summary</h3>
+      <div class="stats-grid">
+        <div class="stat-card">
+          <div class="stat-label">Approved Leaves</div>
+          <div class="stat-value leaves-approved">{{ stats().approvedLeaves }}</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Pending Leaves</div>
+          <div class="stat-value leaves-pending">{{ stats().pendingLeaves }}</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Total Leave Days</div>
+          <div class="stat-value leaves-total">{{ stats().leaveDays }}</div>
         </div>
       </div>
     </div>
@@ -91,6 +124,21 @@ interface AttendanceStats {
       background: rgba(34, 197, 94, 0.1);
       padding: 8px;
       border-radius: 8px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .present-count {
+      font-size: 28px;
+      font-weight: 700;
+    }
+
+    .present-subtext {
+      font-size: 12px;
+      color: rgba(34, 197, 94, 0.8);
+      font-weight: 500;
     }
 
     .stat-value.absent {
@@ -98,11 +146,47 @@ interface AttendanceStats {
       background: rgba(239, 68, 68, 0.1);
       padding: 8px;
       border-radius: 8px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .absent-count {
+      font-size: 28px;
+      font-weight: 700;
+    }
+
+    .absent-subtext {
+      font-size: 12px;
+      color: rgba(239, 68, 68, 0.8);
+      font-weight: 500;
     }
 
     .stat-value.percentage {
       color: #3b82f6;
       background: rgba(59, 130, 246, 0.1);
+      padding: 8px;
+      border-radius: 8px;
+    }
+
+    .stat-value.leaves-approved {
+      color: #10b981;
+      background: rgba(16, 185, 129, 0.1);
+      padding: 8px;
+      border-radius: 8px;
+    }
+
+    .stat-value.leaves-pending {
+      color: #f59e0b;
+      background: rgba(245, 158, 11, 0.1);
+      padding: 8px;
+      border-radius: 8px;
+    }
+
+    .stat-value.leaves-total {
+      color: #8b5cf6;
+      background: rgba(139, 92, 246, 0.1);
       padding: 8px;
       border-radius: 8px;
     }
@@ -143,6 +227,12 @@ export class AttendanceStatsComponent {
     });
 
     const presentDays = monthRecords.filter(r => r.inTime).length;
+    
+    // Count Sat Off and Sun Off days in current month
+    const holidays = this.holidayService.getHolidaysByMonth(currentMonth, currentYear);
+    const satOffDays = holidays.filter(h => h.name === 'Saturday Off').length;
+    const sunOffDays = holidays.filter(h => h.name === 'Sunday Off').length;
+    
     const totalDays = new Date(currentYear, currentMonth + 1, 0).getDate();
     const absentDays = Math.max(0, totalDays - presentDays);
 
@@ -156,6 +246,20 @@ export class AttendanceStatsComponent {
       }
     });
 
+    // Calculate leave statistics
+    const approvedLeaves = this.leaveService.getLeavesByMonth(currentMonth, currentYear).length;
+    const allUserLeaves = this.leaveService.getUserLeaves();
+    const pendingLeaves = allUserLeaves.filter(l => l.status === 'pending').length;
+
+    // Count total leave days
+    let leaveDays = 0;
+    this.leaveService.getLeavesByMonth(currentMonth, currentYear).forEach(leave => {
+      const start = new Date(leave.startDate);
+      const end = new Date(leave.endDate);
+      const days = Math.floor((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24)) + 1;
+      leaveDays += days;
+    });
+
     const averageHours = presentDays > 0 ? totalHours / presentDays : 0;
     const percentage = totalDays > 0 ? Math.round((presentDays / totalDays) * 100) : 0;
 
@@ -165,9 +269,19 @@ export class AttendanceStatsComponent {
       absentDays,
       totalHours,
       averageHours,
-      percentage
+      percentage,
+      leaveDays,
+      approvedLeaves,
+      pendingLeaves,
+      satOffDays,
+      sunOffDays
     };
   });
+
+  constructor(
+    private leaveService: LeaveService,
+    private holidayService: HolidayService
+  ) {}
 
   formatHours(hours: number): string {
     const h = Math.floor(hours);
@@ -175,3 +289,5 @@ export class AttendanceStatsComponent {
     return `${h}h ${m}m`;
   }
 }
+
+

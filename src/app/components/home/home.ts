@@ -126,19 +126,20 @@ export class HomeComponent {
     this.showClockInModal.set(true);
   }
 
-  confirmClockIn() {
+  async confirmClockIn() {
     this.isLoading.set(true);
     try {
       const todayRecord = this.attendanceService.getTodayRecord();
       if (todayRecord?.inTime) {
         this.toastService.warning('Already clocked in today');
       } else {
-        this.attendanceService.clockIn();
+        await this.attendanceService.clockIn();
         this.toastService.success('Clocked in successfully!');
       }
       this.showClockInModal.set(false);
     } catch (error) {
       this.toastService.error('Failed to clock in. Please try again.');
+      console.error('Clock in error:', error);
     } finally {
       this.isLoading.set(false);
     }
@@ -152,7 +153,7 @@ export class HomeComponent {
     this.showClockOutModal.set(true);
   }
 
-  confirmClockOut() {
+  async confirmClockOut() {
     this.isLoading.set(true);
     try {
       const todayRecord = this.attendanceService.getTodayRecord();
@@ -161,12 +162,13 @@ export class HomeComponent {
       } else if (todayRecord?.outTime) {
         this.toastService.warning('Already clocked out today');
       } else {
-        this.attendanceService.clockOut();
+        await this.attendanceService.clockOut();
         this.toastService.success('Clocked out successfully!');
       }
       this.showClockOutModal.set(false);
     } catch (error) {
       this.toastService.error('Failed to clock out. Please try again.');
+      console.error('Clock out error:', error);
     } finally {
       this.isLoading.set(false);
     }

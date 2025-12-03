@@ -1,7 +1,9 @@
 import { Component } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { Router } from '@angular/router';
 import { ThemeService } from '../../services/theme.service';
 import { ToastService } from '../../services/toast.service';
+import { AuthService } from '../../services/auth.service';
 
 @Component({
   selector: 'app-footer',
@@ -21,6 +23,13 @@ import { ToastService } from '../../services/toast.service';
           <h4>Appearance</h4>
           <button class="theme-toggle-btn" (click)="toggleTheme()">
             <span class="theme-icon">{{ isDark() ? '☀️ Light Mode' : '🌙 Dark Mode' }}</span>
+          </button>
+        </div>
+
+        <div class="footer-section logout-section">
+          <h4>Account</h4>
+          <button class="logout-btn" (click)="logout()">
+            <span class="logout-icon">🚪 Logout</span>
           </button>
         </div>
       </div>
@@ -94,6 +103,11 @@ import { ToastService } from '../../services/toast.service';
       flex-direction: column;
     }
 
+    .logout-section {
+      display: flex;
+      flex-direction: column;
+    }
+
     .theme-toggle-btn {
       display: inline-flex;
       align-items: center;
@@ -117,6 +131,32 @@ import { ToastService } from '../../services/toast.service';
     }
 
     .theme-icon {
+      font-size: 18px;
+    }
+
+    .logout-btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      padding: 8px 10px;
+      background: rgba(239, 68, 68, 0.16);
+      border: 1px solid rgba(239, 68, 68, 0.22);
+      border-radius: 8px;
+      color: var(--text-color);
+      cursor: pointer;
+      font-size: 13px;
+      font-weight: 600;
+      transition: all 0.2s ease;
+    }
+
+    .logout-btn:hover {
+      background: rgba(239, 68, 68, 0.4);
+      box-shadow: 0 0 12px rgba(239, 68, 68, 0.3);
+      transform: translateY(-2px);
+    }
+
+    .logout-icon {
       font-size: 18px;
     }
 
@@ -155,7 +195,8 @@ import { ToastService } from '../../services/toast.service';
         font-size: 13px;
       }
 
-      .theme-toggle-btn {
+      .theme-toggle-btn,
+      .logout-btn {
         padding: 8px 10px;
         font-size: 13px;
       }
@@ -187,13 +228,15 @@ import { ToastService } from '../../services/toast.service';
         font-size: 11px;
       }
 
-      .theme-toggle-btn {
+      .theme-toggle-btn,
+      .logout-btn {
         padding: 8px 12px;
         font-size: 12px;
         gap: 6px;
       }
 
-      .theme-icon {
+      .theme-icon,
+      .logout-icon {
         font-size: 16px;
       }
     }
@@ -202,7 +245,9 @@ import { ToastService } from '../../services/toast.service';
 export class FooterComponent {
   constructor(
     private themeService: ThemeService,
-    private toastService: ToastService
+    private toastService: ToastService,
+    private authService: AuthService,
+    private router: Router
   ) {}
 
   isDark() {
@@ -213,4 +258,11 @@ export class FooterComponent {
     this.themeService.toggleTheme();
     this.toastService.info(`Switched to ${this.themeService.isDark() ? 'dark' : 'light'} mode`);
   }
+
+  logout() {
+    this.authService.logout();
+    this.toastService.success('Logged out successfully');
+    this.router.navigate(['/login']);
+  }
 }
+

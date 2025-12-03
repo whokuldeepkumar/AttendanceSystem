@@ -115,7 +115,7 @@ export class ReportComponent {
 
   /**
    * Mark directly from the Manual Entry modal for the currently selected manualDate.
-   * Keeps the manual modal open so user can continue editing/saving attendance.
+   * Closes the manual modal after marking.
    */
   markFromManual(type: 'leave' | 'sat-off' | 'sun-off') {
     const date = this.manualDate() || new Date().toISOString().split('T')[0];
@@ -145,6 +145,8 @@ export class ReportComponent {
     } catch (err) {
       this.toastService.error('Failed to mark day');
       console.error('markFromManual error:', err);
+    } finally {
+      this.showManualModal.set(false);
     }
   }
 

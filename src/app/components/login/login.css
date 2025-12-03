@@ -89,8 +89,10 @@
 
 .btn-primary {
   background: linear-gradient(135deg, #6366f1, #8b5cf6);
-  color: white;
+  color: white !important;
   border: 1px solid rgba(255, 255, 255, 0.2);
+  font-weight: 600;
+  text-shadow: none;
 }
 
 .btn-primary:hover:not(:disabled) {
@@ -135,6 +137,34 @@ h2 {
   background-clip: text;
   margin-top: 0;
   margin-bottom: 24px;
+}
+
+.info-box {
+  background: rgba(99, 102, 241, 0.1);
+  border: 1px solid rgba(99, 102, 241, 0.3);
+  border-radius: 12px;
+  padding: 16px;
+  margin-bottom: 24px;
+}
+
+.info-text {
+  color: rgba(255, 255, 255, 0.9);
+  font-size: 13px;
+  font-weight: 600;
+  margin: 0 0 8px 0;
+}
+
+.credentials-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.credentials-list li {
+  color: rgba(255, 255, 255, 0.75);
+  font-size: 12px;
+  padding: 4px 0;
+  font-family: monospace;
 }
 
 @media (max-width: 600px) {

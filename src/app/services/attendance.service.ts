@@ -3,6 +3,7 @@ import { StorageService } from './storage.service';
 import { AuthService } from './auth.service';
 
 export interface AttendanceRecord {
+    userId?: string;
     date: string; // ISO Date string YYYY-MM-DD
     inTime: string | null; // ISO String
     outTime: string | null; // ISO String
@@ -14,6 +15,7 @@ export interface AttendanceRecord {
 })
 export class AttendanceService {
     private records = signal<AttendanceRecord[]>([]);
+    private readonly API_URL = 'http://localhost:3000/api';
 
     // Computed signal to get records sorted by date descending
     sortedRecords = computed(() => {
@@ -29,13 +31,29 @@ export class AttendanceService {
         return user ? `attendance_${user.id}` : '';
     }
 
-    loadRecords() {
-        const key = this.getStorageKey();
-        if (key) {
-            const data = this.storageService.getItem<AttendanceRecord[]>(key) || [];
-            this.records.set(data);
-        } else {
-            this.records.set([]);
+    async loadRecords() {
+        try {
+            const user = this.authService.currentUser();
+            if (!user) {
+                this.records.set([]);
+                return;
+            }
+
+            const response = await fetch(`${this.API_URL}/attendance/${user.id}`);
+            if (response.ok) {
+                const data = await response.json();
+                this.records.set(data);
+                console.log('Attendance records loaded from API:', data);
+            }
+        } catch (error) {
+            console.error('Error loading attendance from API:', error);
+            // Fallback to localStorage
+            const key = this.getStorageKey();
+            if (key) {
+                const data = this.storageService.getItem<AttendanceRecord[]>(key) || [];
+                this.records.set(data);
+                console.log('Attendance records loaded from localStorage');
+            }
         }
     }
 
@@ -44,9 +62,12 @@ export class AttendanceService {
         return this.records().find(r => r.date === today);
     }
 
-    clockIn() {
-        const key = this.getStorageKey();
-        if (!key) return;
+    async clockIn() {
+        const user = this.authService.currentUser();
+        if (!user) {
+            console.error('clockIn: No user logged in');
+            return;
+        }
 
         const today = new Date().toISOString().split('T')[0];
         const now = new Date().toISOString();
@@ -55,13 +76,12 @@ export class AttendanceService {
         const existingRecordIndex = currentRecords.findIndex(r => r.date === today);
 
         if (existingRecordIndex > -1) {
-            // Already clocked in? Maybe just update if needed, but usually clock in is once.
-            // If they want multiple ins/outs, logic needs to change. Assuming single In/Out per day for simplicity based on "Daily In Out".
             if (!currentRecords[existingRecordIndex].inTime) {
                 currentRecords[existingRecordIndex].inTime = now;
             }
         } else {
             const newRecord: AttendanceRecord = {
+                userId: user.id,
                 date: today,
                 inTime: now,
                 outTime: null,
@@ -70,7 +90,8 @@ export class AttendanceService {
             currentRecords = [...currentRecords, newRecord];
         }
 
-        this.saveRecords(currentRecords);
+        console.log('clockIn: Saving record:', currentRecords);
+        await this.saveRecords(currentRecords);
     }
 
     /**
@@ -102,9 +123,12 @@ export class AttendanceService {
         this.saveRecords(currentRecords);
     }
 
-    clockOut() {
-        const key = this.getStorageKey();
-        if (!key) return;
+    async clockOut() {
+        const user = this.authService.currentUser();
+        if (!user) {
+            console.error('clockOut: No user logged in');
+            return;
+        }
 
         const today = new Date().toISOString().split('T')[0];
         const now = new Date().toISOString();
@@ -118,15 +142,49 @@ export class AttendanceService {
                 currentRecords[existingRecordIndex].inTime,
                 now
             );
-            this.saveRecords(currentRecords);
+            console.log('clockOut: Saving record:', currentRecords[existingRecordIndex]);
+            await this.saveRecords(currentRecords);
         }
     }
 
-    private saveRecords(records: AttendanceRecord[]) {
+    private async saveRecords(records: AttendanceRecord[]) {
+        const user = this.authService.currentUser();
+        if (!user) return;
+
+        // Save to localStorage first for immediate availability
         const key = this.getStorageKey();
         if (key) {
             this.storageService.setItem(key, records);
             this.records.set(records);
+        }
+
+        // Then sync to API
+        try {
+            for (const record of records) {
+                const response = await fetch(`${this.API_URL}/attendance`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        userId: user.id,
+                        date: record.date,
+                        inTime: record.inTime,
+                        outTime: record.outTime,
+                        duration: record.duration
+                    })
+                });
+                
+                if (!response.ok) {
+                    console.error(`API error: ${response.status} ${response.statusText}`);
+                    const error = await response.json();
+                    console.error('API response:', error);
+                } else {
+                    const data = await response.json();
+                    console.log('Record saved to API:', data);
+                }
+            }
+            console.log('Attendance records synced to API');
+        } catch (error) {
+            console.error('Error syncing attendance to API:', error);
         }
     }
 
@@ -157,10 +215,7 @@ export class AttendanceService {
         const user = this.authService.currentUser();
         console.log('addOrUpdateRecord: currentUser =', user);
         
-        const key = this.getStorageKey();
-        console.log('addOrUpdateRecord: storageKey =', key);
-        
-        if (!key) {
+        if (!user) {
             console.error('addOrUpdateRecord: No user logged in, cannot save');
             return;
         }
@@ -171,6 +226,7 @@ export class AttendanceService {
         const existingIndex = currentRecords.findIndex(r => r.date === dateIso);
 
         const record: AttendanceRecord = {
+            userId: user.id,
             date: dateIso,
             inTime: inTimeIso,
             outTime: outTimeIso,
@@ -178,7 +234,6 @@ export class AttendanceService {
         };
 
         if (existingIndex > -1) {
-            // merge with existing (overwrite provided fields)
             const existing = { ...currentRecords[existingIndex] };
             existing.inTime = record.inTime ?? existing.inTime;
             existing.outTime = record.outTime ?? existing.outTime;

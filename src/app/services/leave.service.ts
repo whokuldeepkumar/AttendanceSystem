@@ -17,15 +17,34 @@ export interface LeaveRequest {
 })
 export class LeaveService {
   private readonly LEAVES_KEY = 'leave_requests';
+  private readonly API_URL = 'http://localhost:3000/api';
   leaveRequests = signal<LeaveRequest[]>([]);
 
   constructor(private storageService: StorageService, private authService: AuthService) {
     this.loadLeaves();
   }
 
-  private loadLeaves() {
-    const data = this.storageService.getItem<LeaveRequest[]>(this.LEAVES_KEY) || [];
-    this.leaveRequests.set(data);
+  private async loadLeaves() {
+    try {
+      const user = this.authService.currentUser();
+      if (!user) {
+        this.leaveRequests.set([]);
+        return;
+      }
+
+      const response = await fetch(`${this.API_URL}/leave/${user.id}`);
+      if (response.ok) {
+        const data = await response.json();
+        this.leaveRequests.set(data);
+        console.log('Leave requests loaded from API:', data);
+      }
+    } catch (error) {
+      console.error('Error loading leave from API:', error);
+      // Fallback to localStorage
+      const data = this.storageService.getItem<LeaveRequest[]>(this.LEAVES_KEY) || [];
+      this.leaveRequests.set(data);
+      console.log('Leave requests loaded from localStorage');
+    }
   }
 
   requestLeave(startDate: string, endDate: string, reason: string) {
@@ -42,9 +61,7 @@ export class LeaveService {
       createdAt: new Date().toISOString()
     };
 
-    const updated = [...this.leaveRequests(), leaveRequest];
-    this.leaveRequests.set(updated);
-    this.storageService.setItem(this.LEAVES_KEY, updated);
+    this.saveLeave(leaveRequest);
     return leaveRequest;
   }
 
@@ -62,26 +79,58 @@ export class LeaveService {
       createdAt: new Date().toISOString()
     };
 
-    const updated = [...this.leaveRequests(), leaveRequest];
-    this.leaveRequests.set(updated);
-    this.storageService.setItem(this.LEAVES_KEY, updated);
+    this.saveLeave(leaveRequest);
     return leaveRequest;
   }
 
-  approveLeave(leaveId: string) {
-    const updated = this.leaveRequests().map(l =>
-      l.id === leaveId ? { ...l, status: 'approved' as const } : l
-    );
+  private async saveLeave(leaveRequest: LeaveRequest) {
+    const updated = [...this.leaveRequests(), leaveRequest];
+    
+    // Save to localStorage first
     this.leaveRequests.set(updated);
     this.storageService.setItem(this.LEAVES_KEY, updated);
+
+    // Then sync to API
+    try {
+      await fetch(`${this.API_URL}/leave`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(leaveRequest)
+      });
+      console.log('Leave request synced to API');
+    } catch (error) {
+      console.error('Error syncing leave to API:', error);
+    }
+  }
+
+  approveLeave(leaveId: string) {
+    this.updateLeaveStatus(leaveId, 'approved');
   }
 
   rejectLeave(leaveId: string) {
+    this.updateLeaveStatus(leaveId, 'rejected');
+  }
+
+  private async updateLeaveStatus(leaveId: string, status: 'approved' | 'rejected') {
     const updated = this.leaveRequests().map(l =>
-      l.id === leaveId ? { ...l, status: 'rejected' as const } : l
+      l.id === leaveId ? { ...l, status } : l
     );
+    
+    // Save to localStorage first
     this.leaveRequests.set(updated);
     this.storageService.setItem(this.LEAVES_KEY, updated);
+
+    // Then sync to API
+    try {
+      await fetch(`${this.API_URL}/leave/${leaveId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status })
+      });
+      console.log('Leave status updated in API');
+    } catch (error) {
+      console.error('Error updating leave in API:', error);
+    }
   }
 
   getUserLeaves(): LeaveRequest[] {
