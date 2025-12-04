@@ -8,7 +8,8 @@
     "dev": "concurrently \"npm run server\" \"npm start\"",
     "build": "ng build",
     "watch": "ng build --watch --configuration development",
-    "test": "ng test"
+    "test": "ng test",
+    "install:backend": "npm install --production --ignore-scripts"
   },
   "prettier": {
     "printWidth": 100,
