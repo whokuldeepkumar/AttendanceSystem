@@ -76,15 +76,15 @@
   padding: 10px 12px;
   font-size: 18px;
   border-radius: 10px;
-  background: rgba(99, 102, 241, 0.2);
-  border: 1px solid rgba(99, 102, 241, 0.3);
-  color: var(--text-color);
+  background: var(--primary-color);
+  border: none;
+  color: white;
   cursor: pointer;
   transition: all 0.3s ease;
 }
 
 .btn-icon:hover {
-  background: rgba(99, 102, 241, 0.4);
+  background: var(--primary-hover);
   transform: scale(1.05);
 }
 
@@ -127,8 +127,8 @@
 .btn-mark {
   padding: 10px 16px;
   font-size: 13px;
-  background: rgba(120, 119, 198, 0.2);
-  border: 1px solid rgba(120, 119, 198, 0.3);
+  background: var(--bg-secondary);
+  border: 1px solid var(--glass-border);
   border-radius: 10px;
   color: var(--text-color);
   cursor: pointer;
@@ -136,9 +136,9 @@
 }
 
 .btn-mark:hover {
-  background: rgba(120, 119, 198, 0.3);
-  border-color: rgba(120, 119, 198, 0.5);
-  box-shadow: 0 0 8px rgba(120, 119, 198, 0.2);
+  background: var(--primary-color);
+  color: white;
+  border-color: var(--primary-color);
   transform: translateY(-2px);
 }
 
@@ -174,13 +174,13 @@
 }
 
 .btn-report {
-  background: linear-gradient(135deg, rgba(99, 102, 241, 0.6), rgba(139, 92, 246, 0.6));
+  background: var(--primary-color);
   color: white;
-  border: 1px solid rgba(99, 102, 241, 0.3);
+  border: none;
 }
 
 .btn-report:hover {
-  background: linear-gradient(135deg, rgba(99, 102, 241, 0.8), rgba(139, 92, 246, 0.8));
+  background: var(--primary-hover);
   transform: translateY(-2px);
 }
 
@@ -197,14 +197,13 @@
 .attendance-table {
   width: 100%;
   border-collapse: collapse;
-  background: rgba(255, 255, 255, 0.05);
-  backdrop-filter: blur(10px);
+  background: var(--bg-secondary);
   border-radius: 12px;
   overflow: hidden;
 }
 
 .attendance-table thead {
-  background: rgba(255, 255, 255, 0.1);
+  background: rgba(99, 102, 241, 0.15);
 }
 
 .attendance-table th {
@@ -217,7 +216,7 @@
 
 .attendance-table td {
   padding: 12px 14px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  border-bottom: 1px solid var(--glass-border);
   color: var(--text-color);
 }
 
@@ -240,7 +239,7 @@
 }
 
 .attendance-table tbody tr:hover {
-  background: rgba(255, 255, 255, 0.08);
+  background: rgba(99, 102, 241, 0.1);
   transition: background 0.3s ease;
 }
 
@@ -346,9 +345,9 @@
 
 /* Delete Button */
 .btn-delete {
-  background: rgba(239, 68, 68, 0.2);
-  border: 1px solid rgba(239, 68, 68, 0.3);
-  color: #ff6b6b;
+  background: #ef4444;
+  border: none;
+  color: white;
   padding: 8px 12px;
   font-size: 13px;
   border-radius: 8px;
@@ -357,9 +356,8 @@
 }
 
 .btn-delete:hover {
-  background: rgba(239, 68, 68, 0.3);
-  border-color: rgba(239, 68, 68, 0.5);
-  box-shadow: 0 0 8px rgba(239, 68, 68, 0.3);
+  background: #dc2626;
+  transform: translateY(-1px);
 }
 
 .btn-sm {

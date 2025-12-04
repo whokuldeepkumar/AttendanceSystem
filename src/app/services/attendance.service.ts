@@ -74,53 +74,84 @@ export class AttendanceService {
 
         let currentRecords = this.records();
         const existingRecordIndex = currentRecords.findIndex(r => r.date === today);
+        let recordToSave: AttendanceRecord;
 
         if (existingRecordIndex > -1) {
             if (!currentRecords[existingRecordIndex].inTime) {
                 currentRecords[existingRecordIndex].inTime = now;
+                recordToSave = currentRecords[existingRecordIndex];
+            } else {
+                console.log('clockIn: Already have inTime, skipping');
+                return;
             }
         } else {
-            const newRecord: AttendanceRecord = {
+            recordToSave = {
                 userId: user.id,
                 date: today,
                 inTime: now,
                 outTime: null,
                 duration: ''
             };
-            currentRecords = [...currentRecords, newRecord];
+            currentRecords = [...currentRecords, recordToSave];
         }
 
-        console.log('clockIn: Saving record:', currentRecords);
-        await this.saveRecords(currentRecords);
+        console.log('clockIn: Saving record:', recordToSave);
+        // Update local state first
+        this.records.set(currentRecords);
+        
+        // Sync to localStorage
+        const key = this.getStorageKey();
+        if (key) {
+            this.storageService.setItem(key, currentRecords);
+        }
+
+        // Save to API
+        await this.saveRecordToAPI(recordToSave);
     }
 
     /**
      * Mark a day with a label (e.g., 'Leave', 'Saturday Off') so it appears in attendance records.
      */
-    markDay(dateIso: string, label: string) {
-        const key = this.getStorageKey();
-        if (!key) return;
+    async markDay(dateIso: string, label: string) {
+        const user = this.authService.currentUser();
+        if (!user) {
+            console.error('markDay: No user logged in');
+            return;
+        }
 
         let currentRecords = this.records();
         const existingIndex = currentRecords.findIndex(r => r.date === dateIso);
 
+        const record: AttendanceRecord = {
+            userId: user.id,
+            date: dateIso,
+            inTime: null,
+            outTime: null,
+            duration: label
+        };
+
         if (existingIndex > -1) {
             const existing = { ...currentRecords[existingIndex] };
-            existing.inTime = null;
-            existing.outTime = null;
             existing.duration = label;
             currentRecords = [...currentRecords.slice(0, existingIndex), existing, ...currentRecords.slice(existingIndex + 1)];
+            record.inTime = existing.inTime;
+            record.outTime = existing.outTime;
         } else {
-            const record = {
-                date: dateIso,
-                inTime: null,
-                outTime: null,
-                duration: label
-            } as any;
             currentRecords = [...currentRecords, record];
         }
 
-        this.saveRecords(currentRecords);
+        console.log('markDay: Saving record:', record);
+        // Update local state
+        this.records.set(currentRecords);
+        
+        // Sync to localStorage
+        const key = this.getStorageKey();
+        if (key) {
+            this.storageService.setItem(key, currentRecords);
+        }
+
+        // Save to API
+        await this.saveRecordToAPI(record);
     }
 
     async clockOut() {
@@ -137,54 +168,113 @@ export class AttendanceService {
         const existingRecordIndex = currentRecords.findIndex(r => r.date === today);
 
         if (existingRecordIndex > -1) {
-            currentRecords[existingRecordIndex].outTime = now;
-            currentRecords[existingRecordIndex].duration = this.calculateDuration(
-                currentRecords[existingRecordIndex].inTime,
-                now
-            );
-            console.log('clockOut: Saving record:', currentRecords[existingRecordIndex]);
-            await this.saveRecords(currentRecords);
+            const record = currentRecords[existingRecordIndex];
+            record.outTime = now;
+            record.duration = this.calculateDuration(record.inTime, now);
+            
+            console.log('clockOut: Saving record:', record);
+            // Update local state
+            this.records.set(currentRecords);
+            
+            // Sync to localStorage
+            const key = this.getStorageKey();
+            if (key) {
+                this.storageService.setItem(key, currentRecords);
+            }
+
+            // Save to API
+            await this.saveRecordToAPI(record);
         }
     }
 
     private async saveRecords(records: AttendanceRecord[]) {
         const user = this.authService.currentUser();
-        if (!user) return;
+        if (!user) {
+            console.error('saveRecords: No user logged in');
+            return;
+        }
+
+        console.log('saveRecords: Starting save for', records.length, 'records');
 
         // Save to localStorage first for immediate availability
         const key = this.getStorageKey();
         if (key) {
             this.storageService.setItem(key, records);
             this.records.set(records);
+            console.log('saveRecords: Saved to localStorage');
         }
 
         // Then sync to API
         try {
             for (const record of records) {
+                const payload = {
+                    userId: user.id,
+                    date: record.date,
+                    inTime: record.inTime,
+                    outTime: record.outTime,
+                    duration: record.duration
+                };
+                console.log('saveRecords: Sending to API:', payload);
+                
                 const response = await fetch(`${this.API_URL}/attendance`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        userId: user.id,
-                        date: record.date,
-                        inTime: record.inTime,
-                        outTime: record.outTime,
-                        duration: record.duration
-                    })
+                    body: JSON.stringify(payload)
                 });
                 
+                console.log('saveRecords: API response status:', response.status);
+                
                 if (!response.ok) {
-                    console.error(`API error: ${response.status} ${response.statusText}`);
+                    console.error(`saveRecords: API error: ${response.status} ${response.statusText}`);
                     const error = await response.json();
-                    console.error('API response:', error);
+                    console.error('saveRecords: API error response:', error);
                 } else {
                     const data = await response.json();
-                    console.log('Record saved to API:', data);
+                    console.log('saveRecords: Record saved to API:', data);
                 }
             }
-            console.log('Attendance records synced to API');
+            console.log('saveRecords: All records synced to API successfully');
         } catch (error) {
-            console.error('Error syncing attendance to API:', error);
+            console.error('saveRecords: Error syncing attendance to API:', error);
+        }
+    }
+
+    private async saveRecordToAPI(record: AttendanceRecord): Promise<void> {
+        const user = this.authService.currentUser();
+        if (!user) {
+            console.error('saveRecordToAPI: No user logged in');
+            return;
+        }
+
+        const payload = {
+            userId: user.id,
+            date: record.date,
+            inTime: record.inTime,
+            outTime: record.outTime,
+            duration: record.duration
+        };
+
+        try {
+            console.log('saveRecordToAPI: Sending record to API:', payload);
+            
+            const response = await fetch(`${this.API_URL}/attendance`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+
+            console.log('saveRecordToAPI: API response status:', response.status);
+
+            if (!response.ok) {
+                const error = await response.json();
+                console.error('saveRecordToAPI: API error:', error);
+                return;
+            }
+
+            const data = await response.json();
+            console.log('saveRecordToAPI: Record saved successfully:', data);
+        } catch (error) {
+            console.error('saveRecordToAPI: Network error:', error);
         }
     }
 
@@ -253,12 +343,38 @@ export class AttendanceService {
     /**
      * Delete attendance record for a given date.
      */
-    deleteRecord(dateIso: string) {
-        const key = this.getStorageKey();
-        if (!key) return;
+    async deleteRecord(dateIso: string) {
+        const user = this.authService.currentUser();
+        if (!user) {
+            console.error('deleteRecord: No user logged in');
+            return;
+        }
 
         let currentRecords = this.records();
         const filtered = currentRecords.filter(r => r.date !== dateIso);
-        this.saveRecords(filtered);
+        
+        // Update local state immediately
+        this.records.set(filtered);
+        
+        // Sync deletion to localStorage
+        const key = this.getStorageKey();
+        if (key) {
+            this.storageService.setItem(key, filtered);
+        }
+
+        // Delete from API
+        try {
+            const response = await fetch(`${this.API_URL}/attendance/${user.id}/${dateIso}`, {
+                method: 'DELETE'
+            });
+
+            if (response.ok) {
+                console.log('Attendance record deleted from API');
+            } else {
+                console.error('Error deleting from API:', response.statusText);
+            }
+        } catch (error) {
+            console.error('Error deleting attendance from API:', error);
+        }
     }
 }

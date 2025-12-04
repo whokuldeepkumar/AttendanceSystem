@@ -1,4 +1,5 @@
 import { Component, signal, OnInit } from '@angular/core';
+import { CommonModule } from '@angular/common';
 import { RouterOutlet } from '@angular/router';
 import { ToastComponent } from './components/toast/toast';
 import { HeaderComponent } from './components/header/header';
@@ -9,7 +10,7 @@ import { FooterComponent } from './components/footer/footer';
 @Component({
   selector: 'app-root',
   standalone: true,
-  imports: [RouterOutlet, ToastComponent, HeaderComponent, FooterComponent],
+  imports: [CommonModule, RouterOutlet, ToastComponent, HeaderComponent, FooterComponent],
   templateUrl: './app.html',
   styleUrls: ['./app.css']
 })

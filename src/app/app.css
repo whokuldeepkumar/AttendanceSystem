@@ -1,9 +1,21 @@
 :host {
-  display: block;
+  display: flex;
+  flex-direction: column;
   min-height: 100vh;
   position: relative;
-  /* ensure content doesn't get covered by footer (compact) */
-  padding-bottom: 24px;
+}
+
+::ng-deep app-root {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+.app-main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  width: 100%;
 }
 
 router-outlet + * {

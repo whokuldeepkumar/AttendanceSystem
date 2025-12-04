@@ -1,9 +1,5 @@
 import { Component } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { Router } from '@angular/router';
-import { ThemeService } from '../../services/theme.service';
-import { ToastService } from '../../services/toast.service';
-import { AuthService } from '../../services/auth.service';
 
 @Component({
   selector: 'app-footer',
@@ -19,24 +15,12 @@ import { AuthService } from '../../services/auth.service';
 
         <!-- Quick Links removed as requested -->
 
-        <div class="footer-section theme-section">
-          <h4>Appearance</h4>
-          <button class="theme-toggle-btn" (click)="toggleTheme()">
-            <span class="theme-icon">{{ isDark() ? '☀️ Light Mode' : '🌙 Dark Mode' }}</span>
-          </button>
-        </div>
 
-        <div class="footer-section logout-section">
-          <h4>Account</h4>
-          <button class="logout-btn" (click)="logout()">
-            <span class="logout-icon">🚪 Logout</span>
-          </button>
-        </div>
       </div>
 
       <div class="footer-bottom">
-        <p>&copy; 2024 Attendance App. All rights reserved.</p>
-        <p>Version 1.0.0 | Last updated: December 2024</p>
+        <p>&copy; 2025 Attendance App. All rights reserved.</p>
+        <p>Version 1.0.0 | Last updated: December 2025</p>
       </div>
     </footer>
   `,
@@ -98,67 +82,7 @@ import { AuthService } from '../../services/auth.service';
       color: var(--text-color);
     }
 
-    .theme-section {
-      display: flex;
-      flex-direction: column;
-    }
 
-    .logout-section {
-      display: flex;
-      flex-direction: column;
-    }
-
-    .theme-toggle-btn {
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      gap: 6px;
-      padding: 8px 10px;
-      background: rgba(99, 102, 241, 0.16);
-      border: 1px solid rgba(99, 102, 241, 0.22);
-      border-radius: 8px;
-      color: var(--text-color);
-      cursor: pointer;
-      font-size: 13px;
-      font-weight: 600;
-      transition: all 0.2s ease;
-    }
-
-    .theme-toggle-btn:hover {
-      background: rgba(99, 102, 241, 0.4);
-      box-shadow: 0 0 12px rgba(99, 102, 241, 0.3);
-      transform: translateY(-2px);
-    }
-
-    .theme-icon {
-      font-size: 18px;
-    }
-
-    .logout-btn {
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      gap: 6px;
-      padding: 8px 10px;
-      background: rgba(239, 68, 68, 0.16);
-      border: 1px solid rgba(239, 68, 68, 0.22);
-      border-radius: 8px;
-      color: var(--text-color);
-      cursor: pointer;
-      font-size: 13px;
-      font-weight: 600;
-      transition: all 0.2s ease;
-    }
-
-    .logout-btn:hover {
-      background: rgba(239, 68, 68, 0.4);
-      box-shadow: 0 0 12px rgba(239, 68, 68, 0.3);
-      transform: translateY(-2px);
-    }
-
-    .logout-icon {
-      font-size: 18px;
-    }
 
     .footer-bottom {
       max-width: 1200px;
@@ -195,11 +119,7 @@ import { AuthService } from '../../services/auth.service';
         font-size: 13px;
       }
 
-      .theme-toggle-btn,
-      .logout-btn {
-        padding: 8px 10px;
-        font-size: 13px;
-      }
+
     }
 
     @media (max-width: 480px) {
@@ -228,41 +148,10 @@ import { AuthService } from '../../services/auth.service';
         font-size: 11px;
       }
 
-      .theme-toggle-btn,
-      .logout-btn {
-        padding: 8px 12px;
-        font-size: 12px;
-        gap: 6px;
-      }
 
-      .theme-icon,
-      .logout-icon {
-        font-size: 16px;
-      }
     }
   `]
 })
 export class FooterComponent {
-  constructor(
-    private themeService: ThemeService,
-    private toastService: ToastService,
-    private authService: AuthService,
-    private router: Router
-  ) {}
-
-  isDark() {
-    return this.themeService.isDark();
-  }
-
-  toggleTheme() {
-    this.themeService.toggleTheme();
-    this.toastService.info(`Switched to ${this.themeService.isDark() ? 'dark' : 'light'} mode`);
-  }
-
-  logout() {
-    this.authService.logout();
-    this.toastService.success('Logged out successfully');
-    this.router.navigate(['/login']);
-  }
 }
 

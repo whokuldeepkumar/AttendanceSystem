@@ -83,7 +83,7 @@ export class ReportComponent {
     this.showMarkModal.set(true);
   }
 
-  confirmMark() {
+  async confirmMark() {
     const type = this.markType();
     const date = this.markDate();
     if (!type || !date) return;
@@ -102,7 +102,7 @@ export class ReportComponent {
 
       // Also create/update an attendance record with label so it shows in reports
       const label = type === 'leave' ? 'Leave' : (type === 'sat-off' ? 'Saturday Off' : 'Sunday Off');
-      this.attendanceService.markDay(date, label);
+      await this.attendanceService.markDay(date, label);
     } catch (err) {
       this.toastService.error('Failed to mark day');
       console.error('confirmMark error:', err);
@@ -117,7 +117,7 @@ export class ReportComponent {
    * Mark directly from the Manual Entry modal for the currently selected manualDate.
    * Closes the manual modal after marking.
    */
-  markFromManual(type: 'leave' | 'sat-off' | 'sun-off') {
+  async markFromManual(type: 'leave' | 'sat-off' | 'sun-off') {
     const date = this.manualDate() || new Date().toISOString().split('T')[0];
     if (!date) {
       this.toastService.error('Select a date to mark');
@@ -140,7 +140,7 @@ export class ReportComponent {
       }
 
       const label2 = type === 'leave' ? 'Leave' : (type === 'sat-off' ? 'Saturday Off' : 'Sunday Off');
-      this.attendanceService.markDay(date, label2);
+      await this.attendanceService.markDay(date, label2);
       console.log('markFromManual: marked', type, date);
     } catch (err) {
       this.toastService.error('Failed to mark day');
@@ -160,12 +160,12 @@ export class ReportComponent {
     } else {
       this.manualDate.set(defaultDate.toISOString().split('T')[0]);
     }
-    this.manualIn.set('');
-    this.manualInMin.set('');
+    this.manualIn.set('09');
+    this.manualInMin.set('00');
     this.manualInPeriod.set('AM');
-    this.manualOut.set('');
-    this.manualOutMin.set('');
-    this.manualOutPeriod.set('AM');
+    this.manualOut.set('06');
+    this.manualOutMin.set('00');
+    this.manualOutPeriod.set('PM');
     this.showManualModal.set(true);
   }
 

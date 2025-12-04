@@ -164,6 +164,25 @@ app.post('/api/attendance', (req, res) => {
   }
 });
 
+// DELETE /api/attendance/:userId/:date - Delete attendance record
+app.delete('/api/attendance/:userId/:date', (req, res) => {
+  try {
+    const { userId, date } = req.params;
+    const attendance = readJsonFile(attendanceFilePath) || [];
+    const filtered = attendance.filter(a => !(a.userId === userId && a.date === date));
+
+    writeJsonFile(attendanceFilePath, filtered);
+
+    res.json({
+      success: true,
+      message: 'Attendance record deleted'
+    });
+  } catch (error) {
+    console.error('Error deleting attendance:', error);
+    res.status(500).json({ success: false, message: 'Error deleting attendance' });
+  }
+});
+
 // ==================== LEAVE ====================
 
 // GET /api/leave - Get all leave records

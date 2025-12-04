@@ -128,12 +128,17 @@ export class HomeComponent {
 
   async confirmClockIn() {
     this.isLoading.set(true);
+    console.log('confirmClockIn: Starting...');
     try {
       const todayRecord = this.attendanceService.getTodayRecord();
+      console.log('confirmClockIn: todayRecord=', todayRecord);
+      
       if (todayRecord?.inTime) {
         this.toastService.warning('Already clocked in today');
       } else {
+        console.log('confirmClockIn: Calling attendanceService.clockIn()...');
         await this.attendanceService.clockIn();
+        console.log('confirmClockIn: clockIn() completed');
         this.toastService.success('Clocked in successfully!');
       }
       this.showClockInModal.set(false);
@@ -155,14 +160,19 @@ export class HomeComponent {
 
   async confirmClockOut() {
     this.isLoading.set(true);
+    console.log('confirmClockOut: Starting...');
     try {
       const todayRecord = this.attendanceService.getTodayRecord();
+      console.log('confirmClockOut: todayRecord=', todayRecord);
+      
       if (!todayRecord?.inTime) {
         this.toastService.warning('Please clock in first');
       } else if (todayRecord?.outTime) {
         this.toastService.warning('Already clocked out today');
       } else {
+        console.log('confirmClockOut: Calling attendanceService.clockOut()...');
         await this.attendanceService.clockOut();
+        console.log('confirmClockOut: clockOut() completed');
         this.toastService.success('Clocked out successfully!');
       }
       this.showClockOutModal.set(false);
