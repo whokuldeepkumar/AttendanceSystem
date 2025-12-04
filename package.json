@@ -6,7 +6,7 @@
     "start": "ng serve",
     "server": "node server.js",
     "dev": "concurrently \"npm run server\" \"npm start\"",
-    "build": "ng build",
+    "build": "ng build --configuration production",
     "watch": "ng build --watch --configuration development",
     "test": "ng test",
     "install:backend": "npm install --production --ignore-scripts"

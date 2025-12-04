@@ -69,10 +69,10 @@ app.get('/api/employees', (req, res) => {
 // POST /api/employees - Add new employee
 app.post('/api/employees', (req, res) => {
   try {
-    const { name, mobile } = req.body;
+    const { name, mobile, password } = req.body;
 
-    if (!name || !mobile) {
-      return res.status(400).json({ success: false, message: 'Name and mobile are required' });
+    if (!name || !mobile || !password) {
+      return res.status(400).json({ success: false, message: 'Name, mobile and password are required' });
     }
 
     const normalizedMobile = mobile.replace(/\D/g, '');
@@ -84,7 +84,7 @@ app.post('/api/employees', (req, res) => {
     }
 
     const newId = String((Math.max(...employees.map(e => parseInt(e.id) || 0)) || 0) + 1);
-    const newEmployee = { id: newId, name, mobile: normalizedMobile };
+    const newEmployee = { id: newId, name, mobile: normalizedMobile, password };
 
     employees.push(newEmployee);
     writeJsonFile(employeesFilePath, employees);
