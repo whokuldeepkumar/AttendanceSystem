@@ -1,6 +1,7 @@
 import { Injectable, signal, computed } from '@angular/core';
 import { StorageService } from './storage.service';
 import { AuthService } from './auth.service';
+import { environment } from '../../environments/environment';
 
 export interface AttendanceRecord {
     userId?: string;
@@ -15,7 +16,7 @@ export interface AttendanceRecord {
 })
 export class AttendanceService {
     private records = signal<AttendanceRecord[]>([]);
-    private readonly API_URL = 'http://localhost:3000/api';
+    private readonly API_URL = environment.apiUrl;
 
     // Computed signal to get records sorted by date descending
     sortedRecords = computed(() => {

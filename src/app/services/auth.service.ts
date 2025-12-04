@@ -1,6 +1,7 @@
 import { Injectable, signal } from '@angular/core';
 import { StorageService } from './storage.service';
 import { Router } from '@angular/router';
+import { environment } from '../../environments/environment';
 
 export interface Employee {
     id: string;
@@ -15,7 +16,7 @@ export class AuthService {
     private readonly USER_KEY = 'current_user';
     currentUser = signal<Employee | null>(null);
     private employees: Employee[] = [];
-    private readonly API_URL = 'http://localhost:3000/api';
+    private readonly API_URL = environment.apiUrl;
 
     constructor(private storageService: StorageService, private router: Router) {
         this.loadEmployees();
