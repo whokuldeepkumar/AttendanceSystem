@@ -2,29 +2,6 @@
   <div class="glass-card login-card">
     <h2 class="mb-4">Welcome Back</h2>
 
-    <div class="info-box" style="display: none;">
-      <p class="info-text">📝 Test Login Credentials:</p>
-      <ul class="credentials-list">
-        <li>John Doe / 9876543210</li>
-        <li>Jane Smith / 9876543211</li>
-      </ul>
-    </div>
-
-    <div class="form-group">
-      <label for="name">Full Name</label>
-      <input
-        id="name"
-        type="text"
-        class="glass-input"
-        placeholder="Enter your full name"
-        [ngModel]="name()"
-        (ngModelChange)="name.set($event)"
-        [class.error]="errors()['name']"
-        [disabled]="isLoading()"
-      />
-      <span *ngIf="errors()['name']" class="error-message">{{ errors()['name'] }}</span>
-    </div>
-
     <div class="form-group">
       <label for="mobile">Mobile Number</label>
       <input
@@ -41,6 +18,21 @@
       <span *ngIf="errors()['mobile']" class="error-message">{{ errors()['mobile'] }}</span>
     </div>
 
+    <div class="form-group">
+      <label for="password">Password</label>
+      <input
+        id="password"
+        type="password"
+        class="glass-input"
+        placeholder="Enter your password"
+        [ngModel]="password()"
+        (ngModelChange)="password.set($event)"
+        [class.error]="errors()['password']"
+        [disabled]="isLoading()"
+      />
+      <span *ngIf="errors()['password']" class="error-message">{{ errors()['password'] }}</span>
+    </div>
+
     <button
       class="btn btn-primary btn-block mt-4"
       (click)="login()"
@@ -49,17 +41,57 @@
       <span *ngIf="!isLoading()">Login</span>
       <span *ngIf="isLoading()">Logging in...</span>
     </button>
+
+    <div class="text-center mt-3">
+      <p class="register-text">
+        Don't have an account? 
+        <a href="javascript:void(0)" (click)="openRegisterModal()" class="register-link">Register here</a>
+      </p>
+    </div>
   </div>
 
   <!-- Register Modal -->
   <app-modal
     [isOpen]="showRegisterModal()"
-    title="User Not Found"
-    message="This user is not registered. Would you like to register a new user?"
-    confirmText="Register New User"
-    cancelText="Retry"
+    title="Register New User"
+    confirmText="Register"
+    cancelText="Cancel"
     (confirmed)="registerNewUser()"
     (cancelled)="retryLogin()"
   >
+    <div class="form-group">
+      <label for="regName">Full Name</label>
+      <input
+        id="regName"
+        type="text"
+        class="glass-input"
+        placeholder="Enter full name"
+        [ngModel]="pendingName()"
+        (ngModelChange)="pendingName.set($event)"
+      />
+    </div>
+    <div class="form-group">
+      <label for="regMobile">Mobile Number</label>
+      <input
+        id="regMobile"
+        type="tel"
+        class="glass-input"
+        placeholder="10-digit mobile number"
+        [ngModel]="pendingMobile()"
+        (ngModelChange)="pendingMobile.set($event)"
+        maxlength="10"
+      />
+    </div>
+    <div class="form-group">
+      <label for="regPassword">Password</label>
+      <input
+        id="regPassword"
+        type="password"
+        class="glass-input"
+        placeholder="Enter password"
+        [ngModel]="pendingPassword()"
+        (ngModelChange)="pendingPassword.set($event)"
+      />
+    </div>
   </app-modal>
 </div>

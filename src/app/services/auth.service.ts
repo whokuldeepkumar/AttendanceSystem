@@ -7,6 +7,7 @@ export interface Employee {
     id: string;
     name: string;
     mobile: string;
+    password?: string;
 }
 
 @Injectable({
@@ -29,19 +30,21 @@ export class AuthService {
             if (response.ok) {
                 this.employees = await response.json();
                 console.log('Employees loaded from API:', this.employees);
+                return;
             }
         } catch (error) {
-            console.error('Error loading employees from API:', error);
-            // Fallback to loading from public/employees.json if API fails
-            try {
-                const response = await fetch('/employees.json');
-                if (response.ok) {
-                    this.employees = await response.json();
-                    console.log('Employees loaded from file:', this.employees);
-                }
-            } catch (fallbackError) {
-                console.error('Error loading employees from file:', fallbackError);
+            console.log('API not available, loading from local file');
+        }
+        
+        // Fallback to loading from public/employees.json
+        try {
+            const response = await fetch('/employees.json');
+            if (response.ok) {
+                this.employees = await response.json();
+                console.log('Employees loaded from file:', this.employees);
             }
+        } catch (fallbackError) {
+            console.error('Error loading employees from file:', fallbackError);
         }
     }
 
@@ -52,14 +55,14 @@ export class AuthService {
         }
     }
 
-    validateLogin(name: string, mobile: string): { valid: boolean; message: string; employee?: Employee } {
+    validateLogin(mobile: string, password: string): { valid: boolean; message: string; employee?: Employee } {
         // Normalize mobile number (remove non-digits)
         const normalizedMobile = mobile.replace(/\D/g, '');
 
-        // Find employee by name and mobile
+        // Find employee by mobile and password
         const employee = this.employees.find(emp =>
-            emp.name.toLowerCase() === name.toLowerCase() &&
-            emp.mobile === normalizedMobile
+            emp.mobile === normalizedMobile &&
+            emp.password === password
         );
 
         if (employee) {
@@ -72,12 +75,12 @@ export class AuthService {
 
         return {
             valid: false,
-            message: 'Invalid name or mobile number.'
+            message: 'Invalid mobile number or password.'
         };
     }
 
-    login(name: string, mobile: string): { success: boolean; message: string } {
-        const validation = this.validateLogin(name, mobile);
+    login(mobile: string, password: string): { success: boolean; message: string } {
+        const validation = this.validateLogin(mobile, password);
 
         if (!validation.valid) {
             return {
@@ -101,10 +104,19 @@ export class AuthService {
         };
     }
 
-    async registerUser(name: string, mobile: string): Promise<{ success: boolean; message: string }> {
-        try {
-            const normalizedMobile = mobile.replace(/\D/g, '');
+    async registerUser(name: string, mobile: string, password: string): Promise<{ success: boolean; message: string }> {
+        const normalizedMobile = mobile.replace(/\D/g, '');
 
+        // Check if user already exists
+        const existingUser = this.employees.find(emp => emp.mobile === normalizedMobile);
+        if (existingUser) {
+            return {
+                success: false,
+                message: 'User with this mobile number already exists'
+            };
+        }
+
+        try {
             const response = await fetch(`${this.API_URL}/employees`, {
                 method: 'POST',
                 headers: {
@@ -112,33 +124,40 @@ export class AuthService {
                 },
                 body: JSON.stringify({
                     name: name,
-                    mobile: normalizedMobile
+                    mobile: normalizedMobile,
+                    password: password
                 })
             });
 
             const result = await response.json();
 
             if (response.ok && result.success) {
-                // Add the new employee to local cache
                 this.employees.push(result.employee);
                 console.log('New user registered:', result.employee);
                 return {
                     success: true,
                     message: 'User registered successfully'
                 };
-            } else {
-                return {
-                    success: false,
-                    message: result.message || 'Registration failed'
-                };
             }
         } catch (error) {
-            console.error('Registration error:', error);
-            return {
-                success: false,
-                message: 'Registration failed. Please try again.'
-            };
+            console.log('API not available, registering locally');
         }
+
+        // Local registration fallback
+        const newEmployee: Employee = {
+            id: String(this.employees.length + 1),
+            name: name,
+            mobile: normalizedMobile,
+            password: password
+        };
+
+        this.employees.push(newEmployee);
+        console.log('New user registered locally:', newEmployee);
+        
+        return {
+            success: true,
+            message: 'User registered successfully'
+        };
     }
 
     logout(): void {

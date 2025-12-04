@@ -14,13 +14,14 @@ import { ModalComponent } from '../modal/modal';
   styleUrls: ['./login.css']
 })
 export class LoginComponent {
-  name = signal('');
   mobile = signal('');
+  password = signal('');
   isLoading = signal(false);
   errors = signal<{ [key: string]: string }>({});
   showRegisterModal = signal(false);
   pendingName = signal('');
   pendingMobile = signal('');
+  pendingPassword = signal('');
 
   constructor(
     private authService: AuthService,
@@ -35,16 +36,16 @@ export class LoginComponent {
   validateForm(): boolean {
     const newErrors: { [key: string]: string } = {};
 
-    if (!this.name().trim()) {
-      newErrors['name'] = 'Name is required';
-    } else if (this.name().trim().length < 2) {
-      newErrors['name'] = 'Name must be at least 2 characters';
-    }
-
     if (!this.mobile().trim()) {
       newErrors['mobile'] = 'Mobile number is required';
     } else if (!/^\d{10}$/.test(this.mobile().replace(/\D/g, ''))) {
       newErrors['mobile'] = 'Mobile number must be 10 digits';
+    }
+
+    if (!this.password().trim()) {
+      newErrors['password'] = 'Password is required';
+    } else if (this.password().trim().length < 4) {
+      newErrors['password'] = 'Password must be at least 4 characters';
     }
 
     this.errors.set(newErrors);
@@ -60,7 +61,7 @@ export class LoginComponent {
     this.isLoading.set(true);
 
     try {
-      const result = this.authService.login(this.name(), this.mobile());
+      const result = this.authService.login(this.mobile(), this.password());
       
       if (result.success) {
         this.toastService.success(result.message);
@@ -68,10 +69,7 @@ export class LoginComponent {
           this.router.navigate(['/home']);
         }, 500);
       } else {
-        // User not found - show registration modal
-        this.pendingName.set(this.name());
-        this.pendingMobile.set(this.mobile());
-        this.showRegisterModal.set(true);
+        this.toastService.error(result.message);
       }
     } catch (error) {
       this.toastService.error('Login failed. Please try again.');
@@ -81,21 +79,48 @@ export class LoginComponent {
     }
   }
 
+  openRegisterModal() {
+    this.pendingName.set('');
+    this.pendingMobile.set('');
+    this.pendingPassword.set('');
+    this.showRegisterModal.set(true);
+  }
+
   async registerNewUser() {
+    if (!this.pendingName().trim() || !this.pendingMobile().trim() || !this.pendingPassword().trim()) {
+      this.toastService.error('Please fill all fields');
+      return;
+    }
+
+    if (!/^\d{10}$/.test(this.pendingMobile().replace(/\D/g, ''))) {
+      this.toastService.error('Mobile number must be 10 digits');
+      return;
+    }
+
+    if (this.pendingPassword().length < 4) {
+      this.toastService.error('Password must be at least 4 characters');
+      return;
+    }
+
     this.isLoading.set(true);
 
     try {
-      const result = await this.authService.registerUser(this.pendingName(), this.pendingMobile());
+      const result = await this.authService.registerUser(
+        this.pendingName(),
+        this.pendingMobile(),
+        this.pendingPassword()
+      );
       
       if (result.success) {
         this.toastService.success('User registered successfully! Please login with your credentials.');
         this.showRegisterModal.set(false);
         
-        // Clear form and prepare for login
-        this.name.set('');
+        // Clear form
         this.mobile.set('');
+        this.password.set('');
         this.pendingName.set('');
         this.pendingMobile.set('');
+        this.pendingPassword.set('');
         this.errors.set({});
       } else {
         this.toastService.error(result.message);
