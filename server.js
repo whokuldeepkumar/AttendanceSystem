@@ -66,6 +66,67 @@ app.get('/api/employees', (req, res) => {
   }
 });
 
+// PUT /api/employees/:id - Update employee
+app.put('/api/employees/:id', (req, res) => {
+  try {
+    const { id } = req.params;
+    const { name, mobile, password } = req.body;
+
+    if (!name || !mobile) {
+      return res.status(400).json({ success: false, message: 'Name and mobile are required' });
+    }
+
+    const normalizedMobile = mobile.replace(/\D/g, '');
+    const employees = readJsonFile(employeesFilePath) || [];
+
+    const index = employees.findIndex(emp => emp.id === id);
+    if (index === -1) {
+      return res.status(404).json({ success: false, message: 'Employee not found' });
+    }
+
+    employees[index] = { 
+      id, 
+      name, 
+      mobile: normalizedMobile,
+      password: password || employees[index].password
+    };
+    writeJsonFile(employeesFilePath, employees);
+
+    res.json({
+      success: true,
+      message: 'Employee updated successfully',
+      employee: employees[index]
+    });
+  } catch (error) {
+    console.error('Error updating employee:', error);
+    res.status(500).json({ success: false, message: 'Error updating employee' });
+  }
+});
+
+// DELETE /api/employees/:id - Delete employee
+app.delete('/api/employees/:id', (req, res) => {
+  try {
+    const { id } = req.params;
+    const employees = readJsonFile(employeesFilePath) || [];
+
+    const filtered = employees.filter(emp => emp.id !== id);
+
+    if (filtered.length === employees.length) {
+      return res.status(404).json({ success: false, message: 'Employee not found' });
+    }
+
+    writeJsonFile(employeesFilePath, filtered);
+
+    res.json({
+      success: true,
+      message: 'Employee deleted successfully'
+    });
+  } catch (error) {
+    console.error('Error deleting employee:', error);
+    res.status(500).json({ success: false, message: 'Error deleting employee' });
+  }
+});
+
 // POST /api/employees - Add new employee
 app.post('/api/employees', (req, res) => {
   try {

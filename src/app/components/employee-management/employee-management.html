@@ -1,0 +1,109 @@
+<div class="container employee-container">
+  
+  <!-- Header -->
+  <div class="glass-card header-card mb-4">
+    <div class="header-content">
+      <button class="btn btn-secondary" (click)="goBack()">← Back</button>
+      <h2>Employee Management</h2>
+      <div></div>
+    </div>
+  </div>
+
+  <!-- Employee List -->
+  <div class="glass-card">
+    <h3 class="mb-3">All Employees</h3>
+    <div class="table-wrapper">
+      <table class="employee-table">
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>Name</th>
+            <th>Mobile</th>
+            <th>Password</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let employee of employees()">
+            <td data-label="ID">{{ employee.id }}</td>
+            <td data-label="Name">{{ employee.name }}</td>
+            <td data-label="Mobile">{{ employee.mobile }}</td>
+            <td data-label="Password">{{ employee.password || '••••••' }}</td>
+            <td data-label="Actions">
+              <div class="action-buttons">
+                <button class="btn btn-edit btn-sm" (click)="openEditModal(employee)">
+                  ✏️ Edit
+                </button>
+                <button class="btn btn-delete btn-sm" (click)="openDeleteModal(employee)">
+                  🗑️ Delete
+                </button>
+              </div>
+            </td>
+          </tr>
+          <tr *ngIf="employees().length === 0" class="no-records">
+            <td colspan="5">No employees found.</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+</div>
+
+<!-- Edit Employee Modal -->
+<app-modal
+  [isOpen]="showEditModal()"
+  title="Edit Employee"
+  message="Update employee information"
+  confirmText="Save"
+  cancelText="Cancel"
+  (confirmed)="confirmEdit()"
+  (cancelled)="showEditModal.set(false)"
+>
+  <div class="modal-form">
+    <div class="form-group">
+      <label for="editName">Name</label>
+      <input 
+        id="editName" 
+        type="text" 
+        class="glass-input" 
+        [ngModel]="editForm.name()" 
+        (ngModelChange)="editForm.name.set($event)"
+        placeholder="Employee Name"
+      >
+    </div>
+    <div class="form-group">
+      <label for="editMobile">Mobile</label>
+      <input 
+        id="editMobile" 
+        type="tel" 
+        class="glass-input" 
+        [ngModel]="editForm.mobile()" 
+        (ngModelChange)="editForm.mobile.set($event)"
+        placeholder="Mobile Number"
+      >
+    </div>
+    <div class="form-group">
+      <label for="editPassword">Password <span style="color: var(--text-muted); font-size: 12px;">(Leave empty to keep current)</span></label>
+      <input 
+        id="editPassword" 
+        type="password" 
+        class="glass-input" 
+        [ngModel]="editForm.password()" 
+        (ngModelChange)="editForm.password.set($event)"
+        placeholder="New Password"
+      >
+    </div>
+  </div>
+</app-modal>
+
+<!-- Delete Confirmation Modal -->
+<app-modal
+  [isOpen]="showDeleteModal()"
+  title="Delete Employee"
+  [message]="'Are you sure you want to delete ' + selectedEmployee()?.name + '? This action cannot be undone.'"
+  confirmText="Delete"
+  cancelText="Cancel"
+  (confirmed)="confirmDelete()"
+  (cancelled)="showDeleteModal.set(false)"
+></app-modal>

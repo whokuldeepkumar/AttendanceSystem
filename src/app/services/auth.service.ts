@@ -172,4 +172,78 @@ export class AuthService {
     getEmployees(): Employee[] {
         return this.employees;
     }
+
+    async updateEmployee(id: string, name: string, mobile: string, password?: string): Promise<{ success: boolean; message: string }> {
+        try {
+            const normalizedMobile = mobile.replace(/\D/g, '');
+            const updateData: any = { name, mobile: normalizedMobile };
+            if (password) {
+                updateData.password = password;
+            }
+
+            const response = await fetch(`${this.API_URL}/employees/${id}`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(updateData)
+            });
+
+            const result = await response.json();
+
+            if (response.ok && result.success) {
+                const index = this.employees.findIndex(emp => emp.id === id);
+                if (index > -1) {
+                    this.employees[index] = { ...this.employees[index], id, name, mobile: normalizedMobile };
+                    if (password) {
+                        this.employees[index].password = password;
+                    }
+                }
+                return {
+                    success: true,
+                    message: 'Employee updated successfully'
+                };
+            } else {
+                return {
+                    success: false,
+                    message: result.message || 'Update failed'
+                };
+            }
+        } catch (error) {
+            console.error('Update error:', error);
+            return {
+                success: false,
+                message: 'Update failed. Please try again.'
+            };
+        }
+    }
+
+    async deleteEmployee(id: string): Promise<{ success: boolean; message: string }> {
+        try {
+            const response = await fetch(`${this.API_URL}/employees/${id}`, {
+                method: 'DELETE'
+            });
+
+            const result = await response.json();
+
+            if (response.ok && result.success) {
+                this.employees = this.employees.filter(emp => emp.id !== id);
+                return {
+                    success: true,
+                    message: 'Employee deleted successfully'
+                };
+            } else {
+                return {
+                    success: false,
+                    message: result.message || 'Delete failed'
+                };
+            }
+        } catch (error) {
+            console.error('Delete error:', error);
+            return {
+                success: false,
+                message: 'Delete failed. Please try again.'
+            };
+        }
+    }
 }

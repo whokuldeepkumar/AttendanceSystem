@@ -26,6 +26,9 @@ import { AuthService } from '../../services/auth.service';
           <button class="theme-toggle" (click)="toggleTheme()" [title]="'Switch to ' + (isDark() ? 'light' : 'dark') + ' mode'">
             <span class="theme-icon">{{ isDark() ? '☀️' : '🌙' }}</span>
           </button>
+          <!-- <button class="employee-btn" (click)="goToEmployees()" *ngIf="currentUser()" title="Manage Employees">
+            <span class="employee-icon">👥</span>
+          </button> -->
           <button class="logout-btn" (click)="logout()" *ngIf="currentUser()" title="Logout">
             <span class="logout-icon">🚪</span>
           </button>
@@ -146,6 +149,26 @@ import { AuthService } from '../../services/auth.service';
       transform: scale(1.05);
     }
 
+    .employee-btn {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 44px;
+      height: 44px;
+      border-radius: 12px;
+      background: #10b981;
+      border: none;
+      color: white;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      font-size: 20px;
+    }
+
+    .employee-btn:hover {
+      background: #059669;
+      transform: scale(1.05);
+    }
+
     .theme-icon {
       display: flex;
       align-items: center;
@@ -178,7 +201,8 @@ import { AuthService } from '../../services/auth.service';
       }
 
       .theme-toggle,
-      .logout-btn {
+      .logout-btn,
+      .employee-btn {
         width: 40px;
         height: 40px;
         font-size: 18px;
@@ -225,5 +249,9 @@ export class HeaderComponent {
     this.authService.logout();
     this.toastService.success('Logged out successfully');
     this.router.navigate(['/login']);
+  }
+
+  goToEmployees() {
+    this.router.navigate(['/employees']);
   }
 }
