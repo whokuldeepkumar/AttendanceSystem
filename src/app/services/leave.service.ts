@@ -1,6 +1,7 @@
 import { Injectable, signal } from '@angular/core';
 import { StorageService } from './storage.service';
 import { AuthService } from './auth.service';
+import { environment } from '../../environments/environment';
 
 export interface LeaveRequest {
   id: string;
@@ -17,7 +18,7 @@ export interface LeaveRequest {
 })
 export class LeaveService {
   private readonly LEAVES_KEY = 'leave_requests';
-  private readonly API_URL = 'http://localhost:3000/api';
+  private readonly API_URL = environment.apiUrl;
   leaveRequests = signal<LeaveRequest[]>([]);
 
   constructor(private storageService: StorageService, private authService: AuthService) {

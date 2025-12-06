@@ -1,5 +1,6 @@
 import { Injectable, signal } from '@angular/core';
 import { StorageService } from './storage.service';
+import { environment } from '../../environments/environment';
 
 export interface Holiday {
   date: string; // ISO Date string YYYY-MM-DD
@@ -12,7 +13,7 @@ export interface Holiday {
 })
 export class HolidayService {
   private readonly HOLIDAYS_KEY = 'holidays';
-  private readonly API_URL = 'http://localhost:3000/api';
+  private readonly API_URL = environment.apiUrl;
   holidays = signal<Holiday[]>([]);
 
   constructor(private storageService: StorageService) {
