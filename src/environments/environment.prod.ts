@@ -1,4 +1,4 @@
 export const environment = {
   production: true,
-  apiUrl: 'https://attendance-backend-gsur.onrender.com/api'
+  apiUrl: 'https://your-backend-url.onrender.com/api' // Update after deploying backend
 };
