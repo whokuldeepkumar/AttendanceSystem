@@ -33,7 +33,9 @@ export class EmployeeManagementComponent {
     this.loadEmployees();
   }
 
-  loadEmployees() {
+  async loadEmployees() {
+    // Wait a bit for auth service to load employees from API
+    await new Promise(resolve => setTimeout(resolve, 500));
     this.employees.set(this.authService.getEmployees());
   }
 
