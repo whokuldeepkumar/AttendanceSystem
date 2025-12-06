@@ -7,14 +7,13 @@ import { ToastService } from '../../services/toast.service';
 import { ThemeService } from '../../services/theme.service';
 import { HolidayService } from '../../services/holiday.service';
 import { LeaveService } from '../../services/leave.service';
-import { SpinnerComponent } from '../spinner/spinner';
 import { ModalComponent } from '../modal/modal';
 import { AttendanceStatsComponent } from '../stats/stats';
 
 @Component({
   selector: 'app-home',
   standalone: true,
-  imports: [CommonModule, SpinnerComponent, ModalComponent, AttendanceStatsComponent],
+  imports: [CommonModule, ModalComponent, AttendanceStatsComponent],
   templateUrl: './home.html',
   styleUrls: ['./home.css']
 })

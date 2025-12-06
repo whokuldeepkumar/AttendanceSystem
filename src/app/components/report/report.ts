@@ -8,7 +8,6 @@ import { ExcelService } from '../../services/excel.service';
 import { ToastService } from '../../services/toast.service';
 import { HolidayService } from '../../services/holiday.service';
 import { LeaveService } from '../../services/leave.service';
-import { SpinnerComponent } from '../spinner/spinner';
 import { ModalComponent } from '../modal/modal';
 import { LeaveManagementComponent } from '../leave/leave';
 import { HolidayManagementComponent } from '../holiday/holiday';
@@ -16,7 +15,7 @@ import { HolidayManagementComponent } from '../holiday/holiday';
 @Component({
   selector: 'app-report',
   standalone: true,
-  imports: [CommonModule, FormsModule, SpinnerComponent, LeaveManagementComponent, HolidayManagementComponent, ModalComponent],
+  imports: [CommonModule, FormsModule, LeaveManagementComponent, HolidayManagementComponent, ModalComponent],
   templateUrl: './report.html',
   styleUrls: ['./report.css']
 })
