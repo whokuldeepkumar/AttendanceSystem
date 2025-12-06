@@ -67,11 +67,11 @@
         </thead>
         <tbody>
           <tr *ngFor="let record of currentMonthRecords()" [ngClass]="getDurationStatus(record.duration).isSufficient ? 'duration-sufficient' : 'duration-insufficient'">
-            <td>{{ record.date | date:'mediumDate' }}</td>
-            <td>{{ record.date | date:'EEEE' }}</td>
-            <td>{{ record.inTime ? (record.inTime | date:'shortTime') : '-' }}</td>
-            <td>{{ record.outTime ? (record.outTime | date:'shortTime') : '-' }}</td>
-            <td [ngClass]="getDurationStatus(record.duration).isSufficient ? 'duration-good' : 'duration-bad'">
+            <td data-label="Date">{{ record.date | date:'mediumDate' }}</td>
+            <td data-label="Day">{{ record.date | date:'EEEE' }}</td>
+            <td data-label="In Time">{{ record.inTime ? (record.inTime | date:'shortTime') : '-' }}</td>
+            <td data-label="Out Time">{{ record.outTime ? (record.outTime | date:'shortTime') : '-' }}</td>
+            <td data-label="Duration" [ngClass]="getDurationStatus(record.duration).isSufficient ? 'duration-good' : 'duration-bad'">
               {{ getDurationStatus(record.duration).displayText }}
             </td>
             <td>

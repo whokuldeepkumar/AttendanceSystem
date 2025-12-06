@@ -285,13 +285,56 @@
     font-size: 20px;
   }
 
-  .attendance-table {
-    font-size: 13px;
+  /* Mobile Grid Layout */
+  .attendance-table thead {
+    display: none;
   }
 
-  .attendance-table th,
+  .attendance-table,
+  .attendance-table tbody,
+  .attendance-table tr,
   .attendance-table td {
-    padding: 10px 8px;
+    display: block;
+    width: 100%;
+  }
+
+  .attendance-table tr {
+    margin-bottom: 16px;
+    border: 1px solid var(--glass-border);
+    border-radius: 12px;
+    padding: 12px;
+    background: var(--bg-secondary);
+  }
+
+  .attendance-table td {
+    padding: 8px 0;
+    border: none;
+    display: grid;
+    grid-template-columns: 100px 1fr;
+    gap: 8px;
+    align-items: center;
+  }
+
+  .attendance-table td:before {
+    content: attr(data-label);
+    font-weight: 600;
+    color: var(--text-muted);
+    font-size: 12px;
+  }
+
+  .attendance-table td:last-child {
+    grid-template-columns: 1fr;
+    margin-top: 8px;
+    padding-top: 8px;
+    border-top: 1px solid var(--glass-border);
+  }
+
+  .attendance-table td:last-child:before {
+    display: none;
+  }
+
+  .btn-delete {
+    width: 100%;
   }
 }
 
@@ -315,15 +358,6 @@
     font-size: 18px;
   }
 
-  .attendance-table {
-    font-size: 12px;
-  }
-
-  .attendance-table th,
-  .attendance-table td {
-    padding: 8px 6px;
-  }
-
   h3 {
     font-size: 16px;
   }
@@ -337,9 +371,13 @@
     font-size: 20px;
   }
 
-  .btn-delete {
-    padding: 6px 10px;
-    font-size: 12px;
+  .attendance-table tr {
+    padding: 10px;
+  }
+
+  .attendance-table td {
+    grid-template-columns: 90px 1fr;
+    font-size: 13px;
   }
 }
 
