@@ -138,26 +138,19 @@ export class AuthService {
                     success: true,
                     message: 'User registered successfully'
                 };
+            } else {
+                return {
+                    success: false,
+                    message: result.message || 'Registration failed'
+                };
             }
         } catch (error) {
-            console.log('API not available, registering locally');
+            console.error('Registration API error:', error);
+            return {
+                success: false,
+                message: 'Registration failed. Please check your connection.'
+            };
         }
-
-        // Local registration fallback
-        const newEmployee: Employee = {
-            id: String(this.employees.length + 1),
-            name: name,
-            mobile: normalizedMobile,
-            password: password
-        };
-
-        this.employees.push(newEmployee);
-        console.log('New user registered locally:', newEmployee);
-        
-        return {
-            success: true,
-            message: 'User registered successfully'
-        };
     }
 
     logout(): void {
