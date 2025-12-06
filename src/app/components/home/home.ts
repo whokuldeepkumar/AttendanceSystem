@@ -40,7 +40,9 @@ export class HomeComponent {
   // Show Clock In button only if no record exists or no in-time today
   canClockIn = computed(() => {
     const todayRecord = this.attendanceService.getTodayRecord();
-    return !todayRecord || !todayRecord.inTime;
+    if (!todayRecord) return true;
+    if (todayRecord.inTime && todayRecord.outTime) return false;
+    return !todayRecord.inTime;
   });
 
   // Show Clock Out button only if there's an in-time today and no out-time yet
