@@ -1,7 +1,7 @@
 node_modules
 .angular
-server.js
-public
+server-postgres.js
 backend-package.json
 render.yaml
 .renderignore
+init-database.sql
