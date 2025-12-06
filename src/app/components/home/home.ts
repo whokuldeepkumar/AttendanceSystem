@@ -40,9 +40,17 @@ export class HomeComponent {
   // Show Clock In button only if no record exists or no in-time today
   canClockIn = computed(() => {
     const todayRecord = this.attendanceService.getTodayRecord();
-    if (!todayRecord) return true;
-    if (todayRecord.inTime && todayRecord.outTime) return false;
-    return !todayRecord.inTime;
+    console.log('canClockIn: todayRecord=', todayRecord);
+    if (!todayRecord) {
+      console.log('canClockIn: No record, showing button');
+      return true;
+    }
+    if (todayRecord.inTime) {
+      console.log('canClockIn: inTime exists, hiding button');
+      return false;
+    }
+    console.log('canClockIn: No inTime, showing button');
+    return true;
   });
 
   // Show Clock Out button only if there's an in-time today and no out-time yet
@@ -71,6 +79,13 @@ export class HomeComponent {
       this.router.navigate(['/login']);
     }
     this.checkTodayStatus();
+    
+    // Wait for data to load then trigger button visibility check
+    setTimeout(() => {
+      console.log('Triggering button visibility check after data load');
+      this.canClockIn();
+      this.canClockOut();
+    }, 1000);
   }
 
   // Helper method to check if duration meets 9-hour requirement and calculate extra/remaining

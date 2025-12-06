@@ -33,13 +33,22 @@ export class AttendanceService {
     }
 
     async loadRecords() {
-        try {
-            const user = this.authService.currentUser();
-            if (!user) {
-                this.records.set([]);
-                return;
-            }
+        const user = this.authService.currentUser();
+        if (!user) {
+            this.records.set([]);
+            return;
+        }
 
+        // Load from localStorage first for immediate display
+        const key = this.getStorageKey();
+        if (key) {
+            const localData = this.storageService.getItem<AttendanceRecord[]>(key) || [];
+            this.records.set(localData);
+            console.log('Attendance records loaded from localStorage:', localData.length, 'records');
+        }
+
+        // Then fetch from API and update
+        try {
             console.log('Loading attendance from API:', `${this.API_URL}/attendance/${user.id}`);
             const response = await fetch(`${this.API_URL}/attendance/${user.id}`);
             console.log('API response status:', response.status);
@@ -48,31 +57,27 @@ export class AttendanceService {
                 const data = await response.json();
                 console.log('Attendance records loaded from API:', data);
                 this.records.set(data);
-            } else {
-                console.error('API returned error:', response.status, response.statusText);
-                // Fallback to localStorage
-                const key = this.getStorageKey();
+                // Update localStorage with fresh data
                 if (key) {
-                    const data = this.storageService.getItem<AttendanceRecord[]>(key) || [];
-                    this.records.set(data);
-                    console.log('Attendance records loaded from localStorage:', data.length, 'records');
+                    this.storageService.setItem(key, data);
                 }
             }
         } catch (error) {
             console.error('Error loading attendance from API:', error);
-            // Fallback to localStorage
-            const key = this.getStorageKey();
-            if (key) {
-                const data = this.storageService.getItem<AttendanceRecord[]>(key) || [];
-                this.records.set(data);
-                console.log('Attendance records loaded from localStorage:', data.length, 'records');
-            }
         }
     }
 
     getTodayRecord(): AttendanceRecord | undefined {
         const today = new Date().toISOString().split('T')[0];
-        return this.records().find(r => r.date === today);
+        const allRecords = this.records();
+        console.log('getTodayRecord: today=', today, 'records=', allRecords);
+        const found = allRecords.find(r => {
+            const recordDate = r.date.split('T')[0]; // Handle if date has timestamp
+            console.log('getTodayRecord: comparing', recordDate, 'with', today, 'match=', recordDate === today);
+            return recordDate === today;
+        });
+        console.log('getTodayRecord: found=', found);
+        return found;
     }
 
     async clockIn() {
