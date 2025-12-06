@@ -40,11 +40,23 @@ export class AttendanceService {
                 return;
             }
 
+            console.log('Loading attendance from API:', `${this.API_URL}/attendance/${user.id}`);
             const response = await fetch(`${this.API_URL}/attendance/${user.id}`);
+            console.log('API response status:', response.status);
+            
             if (response.ok) {
                 const data = await response.json();
-                this.records.set(data);
                 console.log('Attendance records loaded from API:', data);
+                this.records.set(data);
+            } else {
+                console.error('API returned error:', response.status, response.statusText);
+                // Fallback to localStorage
+                const key = this.getStorageKey();
+                if (key) {
+                    const data = this.storageService.getItem<AttendanceRecord[]>(key) || [];
+                    this.records.set(data);
+                    console.log('Attendance records loaded from localStorage:', data.length, 'records');
+                }
             }
         } catch (error) {
             console.error('Error loading attendance from API:', error);
@@ -53,7 +65,7 @@ export class AttendanceService {
             if (key) {
                 const data = this.storageService.getItem<AttendanceRecord[]>(key) || [];
                 this.records.set(data);
-                console.log('Attendance records loaded from localStorage');
+                console.log('Attendance records loaded from localStorage:', data.length, 'records');
             }
         }
     }
