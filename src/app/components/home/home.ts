@@ -37,10 +37,10 @@ export class HomeComponent {
       .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
   });
 
-  // Show Clock In button only if no in-time today and both entries aren't complete
+  // Show Clock In button only if no record exists or no in-time today
   canClockIn = computed(() => {
     const todayRecord = this.attendanceService.getTodayRecord();
-    return !todayRecord?.inTime && !(todayRecord?.inTime && todayRecord?.outTime);
+    return !todayRecord || !todayRecord.inTime;
   });
 
   // Show Clock Out button only if there's an in-time today and no out-time yet
