@@ -5,15 +5,17 @@ import { ThemeService } from '../../services/theme.service';
 import { ToastService } from '../../services/toast.service';
 import { AuthService } from '../../services/auth.service';
 
+import { ModalComponent } from '../modal/modal';
+
 @Component({
   selector: 'app-header',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, ModalComponent],
   template: `
     <header class="app-header">
       <div class="header-content">
         <div class="header-brand">
-          <img src="/TimeTrack.jpg" alt="Time Track" class="brand-logo" />
+          <img src="/TimeTrack.png" alt="Time Track" class="brand-logo" />
           <h1 class="brand-name">Time Track</h1>
         </div>
         <div class="header-actions">
@@ -24,17 +26,27 @@ import { AuthService } from '../../services/auth.service';
             </div>
           </div>
           <button class="theme-toggle" (click)="toggleTheme()" [title]="'Switch to ' + (isDark() ? 'light' : 'dark') + ' mode'">
-            <span class="theme-icon">{{ isDark() ? '☀️' : '🌙' }}</span>
+            <span class="theme-icon">{{ isDark() ? '🌞' : '🌜' }}</span>
           </button>
           <!-- <button class="employee-btn" (click)="goToEmployees()" *ngIf="currentUser()" title="Manage Employees">
             <span class="employee-icon">👥</span>
           </button> -->
-          <button class="logout-btn" (click)="logout()" *ngIf="currentUser()" title="Logout">
-            <span class="logout-icon">🚪</span>
+          <button class="logout-btn" (click)="showLogoutModal = true" *ngIf="currentUser()" title="Logout">
+            <span class="logout-icon">🔓</span>
           </button>
         </div>
       </div>
     </header>
+
+    <app-modal
+      [isOpen]="showLogoutModal"
+      title="Confirm Logout"
+      message="Are you sure you want to logout from Time Track?"
+      confirmText="Logout"
+      cancelText="Cancel"
+      (confirmed)="logout()"
+      (cancelled)="showLogoutModal = false"
+    ></app-modal>
   `,
   styles: [`
     .app-header {
@@ -66,8 +78,12 @@ import { AuthService } from '../../services/auth.service';
     }
 
     .brand-logo {
-      height: 40px;
-      width: auto;
+      height: 50px;
+      width: 50px;
+      border-radius: 50%;
+      object-fit: cover;
+      border: 2px solid var(--primary-color);
+      box-shadow: 0 2px 8px rgba(99, 102, 241, 0.3);
     }
 
     .brand-name {
@@ -182,7 +198,8 @@ import { AuthService } from '../../services/auth.service';
       }
 
       .brand-logo {
-        height: 36px;
+        height: 44px;
+        width: 44px;
       }
 
       .brand-name {
@@ -211,21 +228,40 @@ import { AuthService } from '../../services/auth.service';
     }
 
     @media (max-width: 480px) {
-      .header-actions {
-        gap: 8px;
+      .header-content {
+        padding: 8px 12px;
       }
 
-      .user-details {
-        display: none;
+      .brand-logo {
+        height: 36px;
+        width: 36px;
+      }
+
+      .brand-name {
+        font-size: 16px;
+      }
+
+      .header-actions {
+        gap: 6px;
       }
 
       .user-info {
-        padding: 8px;
+        display: none;
+      }
+
+      .theme-toggle,
+      .logout-btn,
+      .employee-btn {
+        width: 36px;
+        height: 36px;
+        font-size: 16px;
       }
     }
   `]
 })
 export class HeaderComponent {
+  showLogoutModal = false;
+
   constructor(
     private themeService: ThemeService,
     private toastService: ToastService,
@@ -247,6 +283,7 @@ export class HeaderComponent {
   }
 
   logout() {
+    this.showLogoutModal = false;
     this.authService.logout();
     this.toastService.success('Logged out successfully');
     this.router.navigate(['/login']);

@@ -54,7 +54,7 @@ interface AttendanceStats {
         </div>
       </div>
 
-      <h3 style="margin-top: 24px;">Leave Summary</h3>
+      <!-- <h3 style="margin-top: 24px;">Leave Summary</h3>
       <div class="stats-grid">
         <div class="stat-card">
           <div class="stat-label">Approved Leaves</div>
@@ -68,7 +68,7 @@ interface AttendanceStats {
           <div class="stat-label">Total Leave Days</div>
           <div class="stat-value leaves-total">{{ stats().leaveDays }}</div>
         </div>
-      </div>
+      </div> -->
     </div>
   `,
   styles: [`

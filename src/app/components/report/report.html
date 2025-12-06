@@ -99,12 +99,13 @@
     </div>
   </app-modal>
 
-  <!-- Attendance Records -->
+  <!-- Attendance Records section -->
   <div class="section">
     <h3>Attendance Records</h3>
 
-    <!-- Filter Section -->
-    <div class="glass-card filters-card mb-4">
+    <!-- Records Table -->
+    <div class="glass-card records-card">
+      
       <div class="filters">
         <div class="filter-group">
           <label for="month">Month</label>
@@ -121,10 +122,7 @@
           </select>
         </div>
       </div>
-    </div>
 
-    <!-- Records Table -->
-    <div class="glass-card records-card">
       <div class="records-header">
         <h4>{{ months[selectedMonth()].label }} {{ selectedYear() }} Records</h4>
         <span class="record-count">{{ records().length }} days</span>
