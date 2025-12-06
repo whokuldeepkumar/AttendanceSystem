@@ -9,8 +9,8 @@ import { CommonModule } from '@angular/common';
     <footer class="app-footer">
       <div class="footer-content">
         <div class="footer-section">
-          <h4>About</h4>
-          <p>Attendance tracking application with real-time clock-in/out functionality.</p>
+          <h4>About Time Track</h4>
+          <p>Time Track is a modern attendance management system designed to streamline employee time tracking with real-time clock-in/out functionality, comprehensive reporting, and intuitive user experience.</p>
         </div>
 
         <!-- Quick Links removed as requested -->
@@ -19,8 +19,8 @@ import { CommonModule } from '@angular/common';
       </div>
 
       <div class="footer-bottom">
-        <p>&copy; 2025 Attendance App. All rights reserved.</p>
-        <p>Version 1.0.0 | Last updated: December 2025</p>
+        <p>&copy; 2025 Time Track by Knotens. All rights reserved.</p>
+        <p>Developed by Knotens | Version 1.0.0</p>
       </div>
     </footer>
   `,

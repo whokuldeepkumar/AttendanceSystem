@@ -13,8 +13,8 @@ import { AuthService } from '../../services/auth.service';
     <header class="app-header">
       <div class="header-content">
         <div class="header-brand">
-          <span class="brand-icon">📋</span>
-          <h1 class="brand-name">Attendance</h1>
+          <img src="/TimeTrack.jpg" alt="Time Track" class="brand-logo" />
+          <h1 class="brand-name">Time Track</h1>
         </div>
         <div class="header-actions">
           <div class="user-info" *ngIf="currentUser()">
@@ -65,8 +65,9 @@ import { AuthService } from '../../services/auth.service';
       cursor: pointer;
     }
 
-    .brand-icon {
-      font-size: 28px;
+    .brand-logo {
+      height: 40px;
+      width: auto;
     }
 
     .brand-name {
@@ -180,8 +181,8 @@ import { AuthService } from '../../services/auth.service';
         padding: 10px 16px;
       }
 
-      .brand-icon {
-        font-size: 24px;
+      .brand-logo {
+        height: 36px;
       }
 
       .brand-name {
