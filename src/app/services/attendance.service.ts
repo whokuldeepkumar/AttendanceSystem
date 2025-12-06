@@ -181,11 +181,19 @@ export class AttendanceService {
         const existingRecordIndex = currentRecords.findIndex(r => r.date === today);
 
         if (existingRecordIndex > -1) {
-            const record = currentRecords[existingRecordIndex];
-            record.outTime = now;
-            record.duration = this.calculateDuration(record.inTime, now);
+            const updatedRecord = {
+                ...currentRecords[existingRecordIndex],
+                outTime: now,
+                duration: this.calculateDuration(currentRecords[existingRecordIndex].inTime, now)
+            };
             
-            console.log('clockOut: Saving record:', record);
+            currentRecords = [
+                ...currentRecords.slice(0, existingRecordIndex),
+                updatedRecord,
+                ...currentRecords.slice(existingRecordIndex + 1)
+            ];
+            
+            console.log('clockOut: Saving record:', updatedRecord);
             // Update local state
             this.records.set(currentRecords);
             
@@ -196,7 +204,7 @@ export class AttendanceService {
             }
 
             // Save to API
-            await this.saveRecordToAPI(record);
+            await this.saveRecordToAPI(updatedRecord);
         }
     }
 
