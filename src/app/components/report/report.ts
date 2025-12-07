@@ -355,4 +355,59 @@ export class ReportComponent {
   goBack() {
     this.router.navigate(['/home']);
   }
+
+  deleteRecord(dateIso: string) {
+    if (confirm(`Delete attendance record for ${dateIso}?`)) {
+      this.attendanceService.deleteRecord(dateIso);
+      this.toastService.success('Record deleted successfully');
+    }
+  }
+
+  getFinalAttendance(record: any): string {
+    const duration = record.duration;
+    if (!duration || duration === '-') return 'Absent';
+    if (duration === 'Saturday Off') return 'Saturday Off';
+    if (duration === 'Sunday Off') return 'Sunday Off';
+    if (duration === 'Leave') return 'Leave';
+    const timeMatch = duration.match(/(\d+)h\s*(\d+)m/);
+    if (!timeMatch) return duration;
+    const hours = parseInt(timeMatch[1], 10);
+    const minutes = parseInt(timeMatch[2], 10);
+    const totalHours = hours + (minutes / 60);
+    if (totalHours < 4.5) return 'Absent';
+    if (totalHours >= 4.5 && totalHours < 8.5) return 'Half Day';
+    return 'Full Day';
+  }
+
+  getFinalAttendanceClass(record: any): string {
+    const status = this.getFinalAttendance(record);
+    if (status === 'Full Day') return 'attendance-full';
+    if (status === 'Half Day') return 'attendance-half';
+    if (status === 'Absent') return 'attendance-absent';
+    return 'attendance-special';
+  }
+
+  getDurationStatus(durationStr: string | null): { isSufficient: boolean; displayText: string } {
+    if (!durationStr) return { isSufficient: false, displayText: '-' };
+    const matches = durationStr.match(/(\d+)h\s*(\d+)m/);
+    if (!matches) return { isSufficient: false, displayText: durationStr };
+    const hours = parseInt(matches[1], 10);
+    const minutes = parseInt(matches[2], 10);
+    const totalMinutes = hours * 60 + minutes;
+    const requiredMinutes = 9 * 60;
+    const isSufficient = totalMinutes >= requiredMinutes;
+    if (isSufficient) {
+      const extraMinutes = totalMinutes - requiredMinutes;
+      const extraHours = Math.floor(extraMinutes / 60);
+      const extraMins = extraMinutes % 60;
+      const extraText = extraHours > 0 ? `+${extraHours}h ${extraMins}m` : `+${extraMins}m`;
+      return { isSufficient: true, displayText: `${durationStr} (${extraText})` };
+    } else {
+      const remainingMinutes = requiredMinutes - totalMinutes;
+      const remainingHours = Math.floor(remainingMinutes / 60);
+      const remainingMins = remainingMinutes % 60;
+      const remainingText = remainingHours > 0 ? `-${remainingHours}h ${remainingMins}m` : `-${remainingMins}m`;
+      return { isSufficient: false, displayText: `${durationStr} (${remainingText})` };
+    }
+  }
 }

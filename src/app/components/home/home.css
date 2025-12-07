@@ -238,6 +238,27 @@
   font-weight: 600;
 }
 
+/* Final Attendance Styles */
+.attendance-full {
+  color: #22c55e;
+  font-weight: 600;
+}
+
+.attendance-half {
+  color: #f59e0b;
+  font-weight: 600;
+}
+
+.attendance-absent {
+  color: #ef4444;
+  font-weight: 600;
+}
+
+.attendance-special {
+  color: #8b5cf6;
+  font-weight: 600;
+}
+
 .attendance-table tbody tr:hover {
   background: rgba(99, 102, 241, 0.1);
   transition: background 0.3s ease;

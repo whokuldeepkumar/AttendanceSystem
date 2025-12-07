@@ -10,7 +10,8 @@ import { CommonModule } from '@angular/common';
       <div class="footer-content">
         <div class="footer-section">
           <h4>About Time Track</h4>
-          <p>Time Track is a modern attendance management system designed to streamline employee time tracking with real-time clock-in/out functionality, comprehensive reporting, and intuitive user experience.</p>
+          <p>A modern attendance management system designed to streamline employee time tracking with real-time 
+            clock-in/out functionality.</p>
         </div>
 
         <!-- Quick Links removed as requested -->

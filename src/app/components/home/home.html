@@ -62,6 +62,7 @@
             <th>In Time</th>
             <th>Out Time</th>
             <th>Duration</th>
+            <th>Final Attendance</th>
             <th>Action</th>
           </tr>
         </thead>
@@ -74,6 +75,9 @@
             <td data-label="Duration" [ngClass]="getDurationStatus(record.duration).isSufficient ? 'duration-good' : 'duration-bad'">
               {{ getDurationStatus(record.duration).displayText }}
             </td>
+            <td data-label="Final Attendance" [ngClass]="getFinalAttendanceClass(record)">
+              {{ getFinalAttendance(record) }}
+            </td>
             <td>
               <button class="btn btn-delete btn-sm" (click)="deleteRecord(record.date)" title="Delete record">
                 🗑️ Delete
@@ -81,7 +85,7 @@
             </td>
           </tr>
           <tr *ngIf="currentMonthRecords().length === 0" class="no-records">
-            <td colspan="6">
+            <td colspan="7">
               No records found for this month.
             </td>
           </tr>

@@ -88,6 +88,39 @@ export class HomeComponent {
     }, 1000);
   }
 
+  // Calculate final attendance status
+  getFinalAttendance(record: any): string {
+    const duration = record.duration;
+    
+    // Check for special cases first
+    if (!duration || duration === '-') return 'Absent';
+    if (duration === 'Saturday Off') return 'Saturday Off';
+    if (duration === 'Sunday Off') return 'Sunday Off';
+    if (duration === 'Leave') return 'Leave';
+    
+    // Check if it's a holiday/festival name (no time format)
+    const timeMatch = duration.match(/(\d+)h\s*(\d+)m/);
+    if (!timeMatch) return duration; // Return as-is for holidays/festivals
+    
+    // Parse duration and calculate hours
+    const hours = parseInt(timeMatch[1], 10);
+    const minutes = parseInt(timeMatch[2], 10);
+    const totalHours = hours + (minutes / 60);
+    
+    if (totalHours < 4.5) return 'Absent';
+    if (totalHours >= 4.5 && totalHours < 8.5) return 'Half Day';
+    return 'Full Day';
+  }
+
+  // Get CSS class for final attendance
+  getFinalAttendanceClass(record: any): string {
+    const status = this.getFinalAttendance(record);
+    if (status === 'Full Day') return 'attendance-full';
+    if (status === 'Half Day') return 'attendance-half';
+    if (status === 'Absent') return 'attendance-absent';
+    return 'attendance-special';
+  }
+
   // Helper method to check if duration meets 9-hour requirement and calculate extra/remaining
   getDurationStatus(durationStr: string | null): { isSufficient: boolean; displayText: string } {
     if (!durationStr) {
