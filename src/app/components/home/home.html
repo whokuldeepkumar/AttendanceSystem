@@ -159,3 +159,29 @@
   (confirmed)="confirmMark()"
   (cancelled)="cancelMark()"
 ></app-modal>
+
+<!-- Install Prompt Modal -->
+<app-modal
+  [isOpen]="showInstallPrompt()"
+  title="📱 Add to Home Screen"
+  message="Install Time Track on your home screen for quick access and easy attendance marking!"
+  confirmText="Got it!"
+  cancelText=""
+  (confirmed)="dismissInstallPrompt()"
+  (cancelled)="dismissInstallPrompt()"
+>
+  <div class="install-instructions">
+    <button *ngIf="canInstall()" class="btn btn-primary btn-install" (click)="installApp()">
+      ⬇️ Install App Now
+    </button>
+    
+    <div *ngIf="!canInstall()" class="manual-install">
+      <p><strong>How to install manually:</strong></p>
+      <ul>
+        <li>📱 <strong>Android:</strong> Tap menu (⋮) → "Add to Home screen"</li>
+        <li>🍎 <strong>iOS:</strong> Tap share (⎙) → "Add to Home Screen"</li>
+        <li>💻 <strong>Desktop:</strong> Click install icon in address bar</li>
+      </ul>
+    </div>
+  </div>
+</app-modal>

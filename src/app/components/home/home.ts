@@ -27,9 +27,12 @@ export class HomeComponent {
   showClockInModal = signal(false);
   showClockOutModal = signal(false);
   showMarkModal = signal(false);
+  showInstallPrompt = signal(false);
   markType = signal<'leave' | 'sat-off' | 'sun-off' | null>(null);
   todayHolidayName = signal<string | null>(null);
   todayLeaveStatus = signal<boolean>(false);
+  deferredPrompt: any = null;
+  canInstall = signal(false);
   
   // Clock time signals
   clockInHour = signal<number | null>(null);
@@ -88,6 +91,8 @@ export class HomeComponent {
       this.router.navigate(['/login']);
     }
     this.checkTodayStatus();
+    this.setupInstallPrompt();
+    this.checkInstallPrompt();
     
     // Wait for data to load then trigger button visibility check
     setTimeout(() => {
@@ -335,6 +340,52 @@ export class HomeComponent {
     
     now.setHours(hours, minutes, 0, 0);
     return now;
+  }
+
+  setupInstallPrompt() {
+    window.addEventListener('beforeinstallprompt', (e: any) => {
+      e.preventDefault();
+      this.deferredPrompt = e;
+      this.canInstall.set(true);
+    });
+
+    window.addEventListener('appinstalled', () => {
+      this.deferredPrompt = null;
+      this.canInstall.set(false);
+      this.toastService.success('App installed successfully!');
+    });
+  }
+
+  checkInstallPrompt() {
+    const hasSeenPrompt = localStorage.getItem('installPromptSeen');
+    if (!hasSeenPrompt) {
+      setTimeout(() => {
+        this.showInstallPrompt.set(true);
+      }, 2000);
+    }
+  }
+
+  async installApp() {
+    if (!this.deferredPrompt) {
+      this.toastService.info('Installation not available. Please use browser menu.');
+      return;
+    }
+
+    this.deferredPrompt.prompt();
+    const { outcome } = await this.deferredPrompt.userChoice;
+    
+    if (outcome === 'accepted') {
+      this.toastService.success('Installing app...');
+    }
+    
+    this.deferredPrompt = null;
+    this.canInstall.set(false);
+    this.dismissInstallPrompt();
+  }
+
+  dismissInstallPrompt() {
+    localStorage.setItem('installPromptSeen', 'true');
+    this.showInstallPrompt.set(false);
   }
 
   logout() {

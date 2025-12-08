@@ -17,7 +17,7 @@ import { CommonModule } from '@angular/common';
           <ng-content></ng-content>
         </div>
         <div class="modal-footer">
-          <button class="btn btn-secondary" (click)="cancel()">{{ cancelText }}</button>
+          <button *ngIf="cancelText" class="btn btn-secondary" (click)="cancel()">{{ cancelText }}</button>
           <button class="btn btn-primary" (click)="confirm()">{{ confirmText }}</button>
         </div>
       </div>
