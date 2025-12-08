@@ -18,23 +18,24 @@ import { ModalComponent } from '../modal/modal';
           <img src="/TimeTrack.png" alt="Time Track" class="brand-logo" />
           <h1 class="brand-name">Time Track</h1>
         </div>
-        <div class="header-actions">
-          <div class="user-info" *ngIf="currentUser()">
-            <div class="user-details">
-              <span class="user-name">{{ currentUser()?.name }}</span>
-              <span class="user-mobile">{{ currentUser()?.mobile }}</span>
-            </div>
+        <div class="user-info desktop-user-info" *ngIf="currentUser()">
+          <div class="user-details">
+            <span class="user-name">{{ currentUser()?.name }}</span>
+            <span class="user-mobile">{{ currentUser()?.mobile }}</span>
           </div>
+        </div>
+        <div class="header-actions">
           <button class="theme-toggle" (click)="toggleTheme()" [title]="'Switch to ' + (isDark() ? 'light' : 'dark') + ' mode'">
             <span class="theme-icon">{{ isDark() ? '🌞' : '🌜' }}</span>
           </button>
-          <!-- <button class="employee-btn" (click)="goToEmployees()" *ngIf="currentUser()" title="Manage Employees">
-            <span class="employee-icon">👥</span>
-          </button> -->
           <button class="logout-btn" (click)="showLogoutModal = true" *ngIf="currentUser()" title="Logout">
             <span class="logout-icon">🔓</span>
           </button>
         </div>
+      </div>
+      <div class="mobile-user-info" *ngIf="currentUser()">
+        <span class="user-name">{{ currentUser()?.name }}</span>
+        <span class="user-mobile">{{ currentUser()?.mobile }}</span>
       </div>
     </header>
 
@@ -99,7 +100,7 @@ import { ModalComponent } from '../modal/modal';
       gap: 12px;
     }
 
-    .user-info {
+    .desktop-user-info {
       display: flex;
       align-items: center;
       gap: 8px;
@@ -107,6 +108,28 @@ import { ModalComponent } from '../modal/modal';
       background: var(--bg-secondary);
       border-radius: 10px;
       border: 1px solid var(--glass-border);
+    }
+
+    .mobile-user-info {
+      display: none;
+      text-align: center;
+      padding: 8px 12px;
+      border-top: 1px solid var(--glass-border);
+      background: rgba(255, 255, 255, 0.02);
+    }
+
+    .mobile-user-info .user-name {
+      display: block;
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text-color);
+      margin-bottom: 2px;
+    }
+
+    .mobile-user-info .user-mobile {
+      display: block;
+      font-size: 11px;
+      color: var(--text-muted);
     }
 
     .user-details {
@@ -206,16 +229,8 @@ import { ModalComponent } from '../modal/modal';
         font-size: 18px;
       }
 
-      .user-info {
+      .desktop-user-info {
         padding: 6px 10px;
-      }
-
-      .user-name {
-        font-size: 13px;
-      }
-
-      .user-mobile {
-        font-size: 11px;
       }
 
       .theme-toggle,
@@ -245,8 +260,12 @@ import { ModalComponent } from '../modal/modal';
         gap: 6px;
       }
 
-      .user-info {
+      .desktop-user-info {
         display: none;
+      }
+
+      .mobile-user-info {
+        display: block;
       }
 
       .theme-toggle,
