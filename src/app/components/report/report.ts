@@ -110,14 +110,14 @@ export class ReportComponent {
 
   // Mark modal state (Mark Leave / Sat Off / Sun Off)
   showMarkModal = signal(false);
-  markType = signal<'leave' | 'sat-off' | 'sun-off' | null>(null);
+  markType = signal<'1st-half' | '2nd-half' | 'absent' | 'leave' | 'sat-off' | 'sun-off' | null>(null);
   markDate = signal('');
   
   // Delete confirmation modal
   showDeleteModal = signal(false);
   deleteRecordDate = signal('');
 
-  openMarkModal(type: 'leave' | 'sat-off' | 'sun-off') {
+  openMarkModal(type: '1st-half' | '2nd-half' | 'absent' | 'leave' | 'sat-off' | 'sun-off') {
     this.markType.set(type);
     // Prefer manualDate if set, otherwise default to today
     const dateToMark = this.manualDate() || new Date().toISOString().split('T')[0];
@@ -131,7 +131,16 @@ export class ReportComponent {
     if (!type || !date) return;
 
     try {
-      if (type === 'leave') {
+      if (type === '1st-half') {
+        await this.attendanceService.markDay(date, '1st Half Day');
+        this.toastService.success('Marked as 1st Half Day');
+      } else if (type === '2nd-half') {
+        await this.attendanceService.markDay(date, '2nd Half Day');
+        this.toastService.success('Marked as 2nd Half Day');
+      } else if (type === 'absent') {
+        await this.attendanceService.markDay(date, 'Absent');
+        this.toastService.success('Marked as absent');
+      } else if (type === 'leave') {
         this.leaveService.addLeave(date, 'Marked via Reports');
         this.toastService.success('Marked as leave');
       } else if (type === 'sat-off') {
@@ -143,8 +152,10 @@ export class ReportComponent {
       }
 
       // Also create/update an attendance record with label so it shows in reports
-      const label = type === 'leave' ? 'Leave' : (type === 'sat-off' ? 'Saturday Off' : 'Sunday Off');
-      await this.attendanceService.markDay(date, label);
+      if (type !== 'absent') {
+        const label = type === 'leave' ? 'Leave' : (type === 'sat-off' ? 'Saturday Off' : 'Sunday Off');
+        await this.attendanceService.markDay(date, label);
+      }
     } catch (err) {
       this.toastService.error('Failed to mark day');
       console.error('confirmMark error:', err);
@@ -159,7 +170,7 @@ export class ReportComponent {
    * Mark directly from the Manual Entry modal for the currently selected manualDate.
    * Closes the manual modal after marking.
    */
-  async markFromManual(type: 'leave' | 'sat-off' | 'sun-off') {
+  async markFromManual(type: '1st-half' | '2nd-half' | 'absent' | 'leave' | 'sat-off' | 'sun-off') {
     const date = this.manualDate() || new Date().toISOString().split('T')[0];
     if (!date) {
       this.toastService.error('Select a date to mark');
@@ -411,6 +422,8 @@ export class ReportComponent {
     if (duration === 'Saturday Off') return 'Saturday Off';
     if (duration === 'Sunday Off') return 'Sunday Off';
     if (duration === 'Leave') return 'Leave';
+    if (duration === '1st Half Day') return '1st Half Day';
+    if (duration === '2nd Half Day') return '2nd Half Day';
     const timeMatch = duration.match(/(\d+)h\s*(\d+)m/);
     if (!timeMatch) return duration;
     const hours = parseInt(timeMatch[1], 10);
@@ -424,7 +437,7 @@ export class ReportComponent {
   getFinalAttendanceClass(record: any): string {
     const status = this.getFinalAttendance(record);
     if (status === 'Full Day') return 'attendance-full';
-    if (status === 'Half Day') return 'attendance-half';
+    if (status === 'Half Day' || status === '1st Half Day' || status === '2nd Half Day') return 'attendance-half';
     if (status === 'Absent') return 'attendance-absent';
     return 'attendance-special';
   }

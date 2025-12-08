@@ -16,7 +16,7 @@ export class BulkAttendanceComponent {
   employees = signal<any[]>([]);
   selectedEmployees = signal<Set<string>>(new Set());
   selectedDate = signal(new Date().toISOString().split('T')[0]);
-  selectedType = signal<'present' | 'leave' | 'sat-off' | 'sun-off' | null>(null);
+  selectedType = signal<'present' | '1st-half' | '2nd-half' | 'absent' | 'leave' | 'sat-off' | 'sun-off' | null>(null);
 
   constructor(
     private authService: AuthService,
@@ -58,7 +58,7 @@ export class BulkAttendanceComponent {
     this.selectedEmployees.set(new Set());
   }
 
-  selectType(type: 'present' | 'leave' | 'sat-off' | 'sun-off') {
+  selectType(type: 'present' | '1st-half' | '2nd-half' | 'absent' | 'leave' | 'sat-off' | 'sun-off') {
     this.selectedType.set(type);
   }
 
@@ -84,7 +84,7 @@ export class BulkAttendanceComponent {
           date: date,
           inTime: type === 'present' ? new Date(`${date}T09:00:00`).toISOString() : null,
           outTime: type === 'present' ? new Date(`${date}T18:00:00`).toISOString() : null,
-          duration: type === 'leave' ? 'Leave' : type === 'sat-off' ? 'Saturday Off' : type === 'sun-off' ? 'Sunday Off' : '9h 0m'
+          duration: type === '1st-half' ? '1st Half Day' : type === '2nd-half' ? '2nd Half Day' : type === 'absent' ? 'Absent' : type === 'leave' ? 'Leave' : type === 'sat-off' ? 'Saturday Off' : type === 'sun-off' ? 'Sunday Off' : '9h 0m'
         };
 
         await fetch('https://knotend-attendance-backend.onrender.com/api/attendance', {

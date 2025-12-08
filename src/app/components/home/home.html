@@ -16,6 +16,18 @@
   <div class="glass-card actions-card text-center">
     <h3 class="mb-4">Mark Attendance</h3>
     
+    <!-- Today's Clock In Info -->
+    <div *ngIf="todayClockInTime()" class="clock-info">
+      <div class="clock-in-display">
+        <span class="clock-label">Clocked In:</span>
+        <span class="clock-time">{{ todayClockInTime() | date:'shortTime' }}</span>
+      </div>
+      <div class="elapsed-time">
+        <span class="elapsed-label">Time Elapsed:</span>
+        <span class="elapsed-value">{{ elapsedTime() }}</span>
+      </div>
+    </div>
+    
     <!-- Loading state -->
     <div *ngIf="isLoading()" class="loading-state">
       <div class="spinner-small"></div>
@@ -38,7 +50,10 @@
 
     <!-- Mark Options - Always visible -->
     <div *ngIf="!isLoading() && canShowMarkOptions()" class="mark-options">
-      <button class="btn btn-mark" (click)="openMarkModal('leave')">📋 Mark Leave</button>
+      <button class="btn btn-mark" (click)="openMarkModal('1st-half')">🌅 1st Half Day</button>
+      <button class="btn btn-mark" (click)="openMarkModal('2nd-half')">🌆 2nd Half Day</button>
+      <button class="btn btn-mark" (click)="openMarkModal('absent')">❌ Absent</button>
+      <button class="btn btn-mark" (click)="openMarkModal('leave')">📋 Leave</button>
       <button class="btn btn-mark" (click)="openMarkModal('sat-off')">📅 Sat Off</button>
       <button class="btn btn-mark" (click)="openMarkModal('sun-off')">📅 Sun Off</button>
     </div>
@@ -47,6 +62,56 @@
       <button class="btn btn-report" (click)="goToReport()">
         📊 View Monthly Reports & Export
       </button>
+    </div>
+  </div>
+
+  <!-- Calendar View -->
+  <div class="glass-card calendar-card">
+    <h3 class="mb-3">{{ currentMonthName() }} {{ currentYear() }} Calendar</h3>
+    <div class="calendar">
+      <div class="calendar-header">
+        <div class="calendar-day-name">Sun</div>
+        <div class="calendar-day-name">Mon</div>
+        <div class="calendar-day-name">Tue</div>
+        <div class="calendar-day-name">Wed</div>
+        <div class="calendar-day-name">Thu</div>
+        <div class="calendar-day-name">Fri</div>
+        <div class="calendar-day-name">Sat</div>
+      </div>
+      <div class="calendar-grid">
+        <div *ngFor="let day of calendarDays()" 
+             class="calendar-cell"
+             [class.empty]="!day.date"
+             [class.today]="isToday(day.dateStr)"
+             [class.has-record]="day.record"
+             [class.full-day]="day.record && getFinalAttendance(day.record) === 'Full Day'"
+             [class.half-day]="day.record && getFinalAttendance(day.record) === 'Half Day'"
+             [class.absent]="day.record && getFinalAttendance(day.record) === 'Absent'"
+             [class.special]="day.record && isSpecialDay(day.record)">
+          <div class="calendar-date" *ngIf="day.date">{{ day.date }}</div>
+          <div class="calendar-label" *ngIf="day.record">
+            {{ getFinalAttendance(day.record) }}
+          </div>
+        </div>
+      </div>
+      <div class="calendar-legend">
+        <div class="legend-item">
+          <span class="legend-dot full-day-dot"></span>
+          <span>Full Day</span>
+        </div>
+        <div class="legend-item">
+          <span class="legend-dot half-day-dot"></span>
+          <span>Half Day</span>
+        </div>
+        <div class="legend-item">
+          <span class="legend-dot absent-dot"></span>
+          <span>Absent</span>
+        </div>
+        <div class="legend-item">
+          <span class="legend-dot special-dot"></span>
+          <span>Leave/Off</span>
+        </div>
+      </div>
     </div>
   </div>
 
@@ -152,8 +217,8 @@
 <!-- Mark Day Modal -->
 <app-modal
   [isOpen]="showMarkModal()"
-  [title]="'Mark as ' + (markType() === 'leave' ? 'Leave' : markType() === 'sat-off' ? 'Saturday Off' : 'Sunday Off')"
-  [message]="'Are you sure you want to mark today as ' + (markType() === 'leave' ? 'leave' : markType() === 'sat-off' ? 'Saturday Off' : 'Sunday Off') + '?'"
+  [title]="'Mark as ' + (markType() === 'absent' ? 'Absent' : markType() === 'leave' ? 'Leave' : markType() === 'sat-off' ? 'Saturday Off' : 'Sunday Off')"
+  [message]="'Are you sure you want to mark today as ' + (markType() === 'absent' ? 'absent' : markType() === 'leave' ? 'leave' : markType() === 'sat-off' ? 'Saturday Off' : 'Sunday Off') + '?'"
   confirmText="Confirm"
   cancelText="Cancel"
   (confirmed)="confirmMark()"

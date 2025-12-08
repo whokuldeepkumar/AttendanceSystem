@@ -43,11 +43,7 @@ interface AttendanceStats {
 
         <div class="stat-card">
           <div class="stat-label">Absent Days</div>
-          <div class="stat-value absent">{{ stats().leaveDays }}</div>
-          <!-- <div class="stat-value absent">
-            <div class="absent-count">{{ stats().absentDays }}</div>
-            <div class="absent-subtext">{{ stats().leaveDays }} Leave</div>
-          </div> -->
+          <div class="stat-value absent">{{ stats().absentDays }}</div>
         </div>
         
         <div class="stat-card">
@@ -252,14 +248,43 @@ export class AttendanceStatsComponent {
       return date.getMonth() === currentMonth && date.getFullYear() === currentYear;
     });
 
-    const presentDays = monthRecords.filter(r => r.inTime).length;
+    // Calculate present days with half day as 0.5
+    let presentDays = 0;
+    monthRecords.forEach(r => {
+      if (r.duration === '1st Half Day' || r.duration === '2nd Half Day') {
+        presentDays += 0.5;
+      } else if (r.inTime && r.outTime) {
+        const inTime = new Date(r.inTime).getTime();
+        const outTime = new Date(r.outTime).getTime();
+        const totalHours = (outTime - inTime) / (1000 * 60 * 60);
+        if (totalHours >= 8.5) presentDays += 1;
+        else if (totalHours >= 4.5) presentDays += 0.5;
+      }
+    });
     
     // Count Sat Off and Sun Off days from attendance records
     const satOffDays = monthRecords.filter(r => r.duration === 'Saturday Off').length;
     const sunOffDays = monthRecords.filter(r => r.duration === 'Sunday Off').length;
     
     const totalDays = new Date(currentYear, currentMonth + 1, 0).getDate();
-    const absentDays = Math.max(0, totalDays - presentDays);
+    let absentDays = 0;
+    monthRecords.forEach(r => {
+      // Check if marked as 1st Half Day or 2nd Half Day (count as 0.5 absent)
+      if (r.duration === '1st Half Day' || r.duration === '2nd Half Day') {
+        absentDays += 0.5;
+      }
+      // Check if marked as Absent
+      else if (r.duration === 'Absent') {
+        absentDays += 1;
+      }
+      // Check if hours < 4.5
+      else if (r.inTime && r.outTime) {
+        const inTime = new Date(r.inTime).getTime();
+        const outTime = new Date(r.outTime).getTime();
+        const totalHours = (outTime - inTime) / (1000 * 60 * 60);
+        if (totalHours < 4.5) absentDays += 1;
+      }
+    });
 
     // Calculate total hours
     let totalHours = 0;

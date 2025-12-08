@@ -96,7 +96,7 @@ export class AttendanceService {
         const now = customTime ? customTime.toISOString() : new Date().toISOString();
 
         let currentRecords = this.records();
-        const existingRecordIndex = currentRecords.findIndex(r => r.date === today);
+        const existingRecordIndex = currentRecords.findIndex(r => r.date.split('T')[0] === today);
         let recordToSave: AttendanceRecord;
 
         if (existingRecordIndex > -1) {
@@ -192,7 +192,7 @@ export class AttendanceService {
         const now = customTime ? customTime.toISOString() : new Date().toISOString();
 
         let currentRecords = this.records();
-        const existingRecordIndex = currentRecords.findIndex(r => r.date === today);
+        const existingRecordIndex = currentRecords.findIndex(r => r.date.split('T')[0] === today);
 
         if (existingRecordIndex > -1) {
             const updatedRecord = {

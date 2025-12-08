@@ -29,7 +29,7 @@ export class HomeComponent {
   showMarkModal = signal(false);
   showInstallPrompt = signal(false);
   showDeleteModal = signal(false);
-  markType = signal<'leave' | 'sat-off' | 'sun-off' | null>(null);
+  markType = signal<'1st-half' | '2nd-half' | 'absent' | 'leave' | 'sat-off' | 'sun-off' | null>(null);
   todayHolidayName = signal<string | null>(null);
   todayLeaveStatus = signal<boolean>(false);
   deferredPrompt: any = null;
@@ -43,6 +43,28 @@ export class HomeComponent {
   clockOutHour = signal<number | null>(null);
   clockOutMin = signal<number | null>(null);
   clockOutPeriod = signal<'AM' | 'PM'>('PM');
+  
+  // Today's clock in time
+  todayClockInTime = computed(() => {
+    const todayRecord = this.attendanceService.getTodayRecord();
+    return todayRecord?.inTime || null;
+  });
+  
+  // Current time ticker for elapsed time
+  currentTime = signal(new Date());
+  
+  // Elapsed time since clock in
+  elapsedTime = computed(() => {
+    const inTime = this.todayClockInTime();
+    if (!inTime) return '';
+    const now = this.currentTime().getTime();
+    const start = new Date(inTime).getTime();
+    const diff = now - start;
+    const hours = Math.floor(diff / (1000 * 60 * 60));
+    const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+    const seconds = Math.floor((diff % (1000 * 60)) / 1000);
+    return `${hours}h ${minutes}m ${seconds}s`;
+  });
 
   // Get records for current month
   currentMonthRecords = computed(() => {
@@ -50,6 +72,52 @@ export class HomeComponent {
     return this.attendanceService.getRecordsByMonth(now.getMonth(), now.getFullYear())
       .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
   });
+  
+  // Calendar data
+  calendarDays = computed(() => {
+    const now = new Date();
+    const year = now.getFullYear();
+    const month = now.getMonth();
+    const firstDay = new Date(year, month, 1);
+    const lastDay = new Date(year, month + 1, 0);
+    const daysInMonth = lastDay.getDate();
+    const startDayOfWeek = firstDay.getDay();
+    
+    const days: any[] = [];
+    
+    // Add empty cells for days before month starts
+    for (let i = 0; i < startDayOfWeek; i++) {
+      days.push({ date: null, record: null });
+    }
+    
+    // Add days of the month
+    for (let day = 1; day <= daysInMonth; day++) {
+      const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+      const record = this.currentMonthRecords().find(r => r.date.split('T')[0] === dateStr);
+      days.push({ date: day, dateStr, record });
+    }
+    
+    return days;
+  });
+  
+  currentMonthName = computed(() => {
+    const months = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+    return months[new Date().getMonth()];
+  });
+  
+  currentYear = computed(() => new Date().getFullYear());
+  
+  isToday(dateStr: string | undefined): boolean {
+    if (!dateStr) return false;
+    const today = new Date().toISOString().split('T')[0];
+    return dateStr === today;
+  }
+  
+  isSpecialDay(record: any): boolean {
+    if (!record) return false;
+    const status = this.getFinalAttendance(record);
+    return status === 'Leave' || status === 'Saturday Off' || status === 'Sunday Off';
+  }
 
   // Show Clock In button only if no record exists or no in-time today
   canClockIn = computed(() => {
@@ -102,6 +170,11 @@ export class HomeComponent {
       this.canClockIn();
       this.canClockOut();
     }, 1000);
+    
+    // Update current time every second for elapsed time
+    setInterval(() => {
+      this.currentTime.set(new Date());
+    }, 1000);
   }
 
   // Calculate final attendance status
@@ -113,6 +186,8 @@ export class HomeComponent {
     if (duration === 'Saturday Off') return 'Saturday Off';
     if (duration === 'Sunday Off') return 'Sunday Off';
     if (duration === 'Leave') return 'Leave';
+    if (duration === '1st Half Day') return '1st Half Day';
+    if (duration === '2nd Half Day') return '2nd Half Day';
     
     // Check if it's a holiday/festival name (no time format)
     const timeMatch = duration.match(/(\d+)h\s*(\d+)m/);
@@ -132,7 +207,7 @@ export class HomeComponent {
   getFinalAttendanceClass(record: any): string {
     const status = this.getFinalAttendance(record);
     if (status === 'Full Day') return 'attendance-full';
-    if (status === 'Half Day') return 'attendance-half';
+    if (status === 'Half Day' || status === '1st Half Day' || status === '2nd Half Day') return 'attendance-half';
     if (status === 'Absent') return 'attendance-absent';
     return 'attendance-special';
   }
@@ -215,6 +290,7 @@ export class HomeComponent {
         const customTime = this.createCustomTime(this.clockInHour(), this.clockInMin(), this.clockInPeriod());
         console.log('confirmClockIn: Calling attendanceService.clockIn() with time:', customTime);
         await this.attendanceService.clockIn(customTime);
+        await this.attendanceService.loadRecords();
         console.log('confirmClockIn: clockIn() completed');
         this.toastService.success('Clocked in successfully!');
       }
@@ -261,6 +337,7 @@ export class HomeComponent {
         const customTime = this.createCustomTime(this.clockOutHour(), this.clockOutMin(), this.clockOutPeriod());
         console.log('confirmClockOut: Calling attendanceService.clockOut() with time:', customTime);
         await this.attendanceService.clockOut(customTime);
+        await this.attendanceService.loadRecords();
         console.log('confirmClockOut: clockOut() completed');
         this.toastService.success('Clocked out successfully!');
       }
@@ -291,37 +368,46 @@ export class HomeComponent {
     this.showDeleteModal.set(true);
   }
   
-  confirmDelete() {
+  async confirmDelete() {
     const dateIso = this.deleteRecordDate();
     if (dateIso) {
-      this.attendanceService.deleteRecord(dateIso);
+      await this.attendanceService.deleteRecord(dateIso);
+      await this.attendanceService.loadRecords();
       this.toastService.success('Record deleted successfully');
     }
     this.showDeleteModal.set(false);
     this.deleteRecordDate.set('');
   }
 
-  openMarkModal(type: 'leave' | 'sat-off' | 'sun-off') {
+  openMarkModal(type: '1st-half' | '2nd-half' | 'absent' | 'leave' | 'sat-off' | 'sun-off') {
     this.markType.set(type);
     this.showMarkModal.set(true);
   }
 
-  confirmMark() {
+  async confirmMark() {
     const type = this.markType();
     if (!type) return;
 
     const today = new Date().toISOString().split('T')[0];
     try {
-      if (type === 'leave') {
-        // Add to leave service
+      if (type === '1st-half') {
+        await this.attendanceService.markDay(today, '1st Half Day');
+        this.toastService.success('Day marked as 1st Half Day');
+      } else if (type === '2nd-half') {
+        await this.attendanceService.markDay(today, '2nd Half Day');
+        this.toastService.success('Day marked as 2nd Half Day');
+      } else if (type === 'absent') {
+        await this.attendanceService.markDay(today, 'Absent');
+        this.toastService.success('Day marked as absent');
+      } else if (type === 'leave') {
         this.leaveService.addLeave(today, 'Marked as leave');
         this.toastService.success('Day marked as leave');
       } else if (type === 'sat-off' || type === 'sun-off') {
-        // Add to holiday service
         const label = type === 'sat-off' ? 'Saturday Off' : 'Sunday Off';
         this.holidayService.addHoliday(today, label);
         this.toastService.success(`Day marked as ${label}`);
       }
+      await this.attendanceService.loadRecords();
       this.checkTodayStatus();
     } catch (error) {
       this.toastService.error('Failed to mark day. Please try again.');
