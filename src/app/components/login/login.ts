@@ -92,8 +92,30 @@ export class LoginComponent {
       return;
     }
 
-    if (!/^\d{10}$/.test(this.pendingMobile().replace(/\D/g, ''))) {
+    // Validate against spam/temporary names
+    const name = this.pendingName().trim().toLowerCase();
+    const blockedNames = ['admin', 'user', 'test', 'demo', 'sample', 'temp', 'temporary', 'guest', 'example', 'dummy', 'fake', 'spam'];
+    if (blockedNames.some(blocked => name.includes(blocked))) {
+      this.toastService.error('Please use your real name for registration');
+      return;
+    }
+
+    // Validate mobile number format
+    const mobile = this.pendingMobile().replace(/\D/g, '');
+    if (!/^\d{10}$/.test(mobile)) {
       this.toastService.error('Mobile number must be 10 digits');
+      return;
+    }
+
+    // Check for sequential numbers (e.g., 1234567890, 0123456789)
+    if (this.hasSequentialDigits(mobile)) {
+      this.toastService.error('Please enter a valid mobile number');
+      return;
+    }
+
+    // Check for repeated digits (e.g., 1111111111, 9999999999)
+    if (/^(\d)\1{9}$/.test(mobile)) {
+      this.toastService.error('Please enter a valid mobile number');
       return;
     }
 
@@ -136,5 +158,37 @@ export class LoginComponent {
   retryLogin() {
     this.showRegisterModal.set(false);
     // Form values remain the same for user to edit
+  }
+
+  hasSequentialDigits(mobile: string): boolean {
+    // Check for ascending sequence (e.g., 0123456789, 1234567890)
+    let ascendingCount = 0;
+    let descendingCount = 0;
+    
+    for (let i = 0; i < mobile.length - 1; i++) {
+      const current = parseInt(mobile[i]);
+      const next = parseInt(mobile[i + 1]);
+      
+      // Check ascending (including wrap around 9->0)
+      if ((next === current + 1) || (current === 9 && next === 0)) {
+        ascendingCount++;
+      } else {
+        ascendingCount = 0;
+      }
+      
+      // Check descending (including wrap around 0->9)
+      if ((next === current - 1) || (current === 0 && next === 9)) {
+        descendingCount++;
+      } else {
+        descendingCount = 0;
+      }
+      
+      // If 6 or more consecutive sequential digits found, it's likely spam
+      if (ascendingCount >= 5 || descendingCount >= 5) {
+        return true;
+      }
+    }
+    
+    return false;
   }
 }
