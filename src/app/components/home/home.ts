@@ -28,11 +28,13 @@ export class HomeComponent {
   showClockOutModal = signal(false);
   showMarkModal = signal(false);
   showInstallPrompt = signal(false);
+  showDeleteModal = signal(false);
   markType = signal<'leave' | 'sat-off' | 'sun-off' | null>(null);
   todayHolidayName = signal<string | null>(null);
   todayLeaveStatus = signal<boolean>(false);
   deferredPrompt: any = null;
   canInstall = signal(false);
+  deleteRecordDate = signal('');
   
   // Clock time signals
   clockInHour = signal<number | null>(null);
@@ -284,11 +286,19 @@ export class HomeComponent {
     this.router.navigate(['/report'], { state: { editRecord: record } });
   }
 
-  deleteRecord(dateIso: string) {
-    if (confirm(`Delete attendance record for ${dateIso}?`)) {
+  openDeleteModal(dateIso: string) {
+    this.deleteRecordDate.set(dateIso);
+    this.showDeleteModal.set(true);
+  }
+  
+  confirmDelete() {
+    const dateIso = this.deleteRecordDate();
+    if (dateIso) {
       this.attendanceService.deleteRecord(dateIso);
       this.toastService.success('Record deleted successfully');
     }
+    this.showDeleteModal.set(false);
+    this.deleteRecordDate.set('');
   }
 
   openMarkModal(type: 'leave' | 'sat-off' | 'sun-off') {

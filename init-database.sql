@@ -38,13 +38,3 @@ CREATE TABLE IF NOT EXISTS holidays (
   description TEXT,
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
-
--- Insert sample employee
-INSERT INTO employees (name, mobile, password) 
-VALUES ('Admin User', '9876543210', 'admin123')
-ON CONFLICT (mobile) DO NOTHING;
-
--- Insert sample employee 2
-INSERT INTO employees (name, mobile, password) 
-VALUES ('Test User', '1234567890', 'test123')
-ON CONFLICT (mobile) DO NOTHING;

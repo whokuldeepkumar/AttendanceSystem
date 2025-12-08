@@ -9,13 +9,11 @@ import { ToastService } from '../../services/toast.service';
 import { HolidayService } from '../../services/holiday.service';
 import { LeaveService } from '../../services/leave.service';
 import { ModalComponent } from '../modal/modal';
-import { LeaveManagementComponent } from '../leave/leave';
-import { HolidayManagementComponent } from '../holiday/holiday';
 
 @Component({
   selector: 'app-report',
   standalone: true,
-  imports: [CommonModule, FormsModule, LeaveManagementComponent, HolidayManagementComponent, ModalComponent],
+  imports: [CommonModule, FormsModule, ModalComponent],
   templateUrl: './report.html',
   styleUrls: ['./report.css']
 })
@@ -114,6 +112,10 @@ export class ReportComponent {
   showMarkModal = signal(false);
   markType = signal<'leave' | 'sat-off' | 'sun-off' | null>(null);
   markDate = signal('');
+  
+  // Delete confirmation modal
+  showDeleteModal = signal(false);
+  deleteRecordDate = signal('');
 
   openMarkModal(type: 'leave' | 'sat-off' | 'sun-off') {
     this.markType.set(type);
@@ -164,30 +166,13 @@ export class ReportComponent {
       return;
     }
 
-    const confirmed = confirm(`Confirm mark ${type === 'leave' ? 'Leave' : (type === 'sat-off' ? 'Saturday Off' : 'Sunday Off')} for ${date}?`);
-    if (!confirmed) return;
+    // Close manual modal and open mark modal
+    this.showManualModal.set(false);
+    this.markType.set(type);
+    this.markDate.set(date);
+    this.showMarkModal.set(true);
+    return;
 
-    try {
-      if (type === 'leave') {
-        this.leaveService.addLeave(date, 'Marked via manual modal');
-        this.toastService.success('Marked as leave');
-      } else if (type === 'sat-off') {
-        this.holidayService.addHoliday(date, 'Saturday Off');
-        this.toastService.success('Marked as Saturday Off');
-      } else if (type === 'sun-off') {
-        this.holidayService.addHoliday(date, 'Sunday Off');
-        this.toastService.success('Marked as Sunday Off');
-      }
-
-      const label2 = type === 'leave' ? 'Leave' : (type === 'sat-off' ? 'Saturday Off' : 'Sunday Off');
-      await this.attendanceService.markDay(date, label2);
-      console.log('markFromManual: marked', type, date);
-    } catch (err) {
-      this.toastService.error('Failed to mark day');
-      console.error('markFromManual error:', err);
-    } finally {
-      this.showManualModal.set(false);
-    }
   }
 
   openManualModal() {
@@ -405,11 +390,19 @@ export class ReportComponent {
     this.router.navigate(['/home']);
   }
 
-  deleteRecord(dateIso: string) {
-    if (confirm(`Delete attendance record for ${dateIso}?`)) {
+  openDeleteModal(dateIso: string) {
+    this.deleteRecordDate.set(dateIso);
+    this.showDeleteModal.set(true);
+  }
+  
+  confirmDelete() {
+    const dateIso = this.deleteRecordDate();
+    if (dateIso) {
       this.attendanceService.deleteRecord(dateIso);
       this.toastService.success('Record deleted successfully');
     }
+    this.showDeleteModal.set(false);
+    this.deleteRecordDate.set('');
   }
 
   getFinalAttendance(record: any): string {

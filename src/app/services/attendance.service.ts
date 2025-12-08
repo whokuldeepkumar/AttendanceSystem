@@ -1,6 +1,7 @@
 import { Injectable, signal, computed } from '@angular/core';
 import { StorageService } from './storage.service';
 import { AuthService } from './auth.service';
+import { LoadingService } from './loading.service';
 import { environment } from '../../environments/environment';
 
 export interface AttendanceRecord {
@@ -23,7 +24,11 @@ export class AttendanceService {
         return this.records().sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
     });
 
-    constructor(private storageService: StorageService, private authService: AuthService) {
+    constructor(
+        private storageService: StorageService,
+        private authService: AuthService,
+        private loadingService: LoadingService
+    ) {
         this.loadRecords();
     }
 
@@ -124,7 +129,9 @@ export class AttendanceService {
         }
 
         // Save to API
+        this.loadingService.show();
         await this.saveRecordToAPI(recordToSave);
+        this.loadingService.hide();
     }
 
     /**
@@ -169,7 +176,9 @@ export class AttendanceService {
         }
 
         // Save to API
+        this.loadingService.show();
         await this.saveRecordToAPI(record);
+        this.loadingService.hide();
     }
 
     async clockOut(customTime?: Date) {
@@ -209,7 +218,9 @@ export class AttendanceService {
             }
 
             // Save to API
+            this.loadingService.show();
             await this.saveRecordToAPI(updatedRecord);
+            this.loadingService.hide();
         }
     }
 
@@ -327,7 +338,7 @@ export class AttendanceService {
      * Add or update a manual attendance record for a given date.
      * dateIso should be YYYY-MM-DD. inTimeIso/outTimeIso should be full ISO strings or null.
      */
-    addOrUpdateRecord(dateIso: string, inTimeIso: string | null, outTimeIso: string | null) {
+    async addOrUpdateRecord(dateIso: string, inTimeIso: string | null, outTimeIso: string | null) {
         const user = this.authService.currentUser();
         console.log('addOrUpdateRecord: currentUser =', user);
         
@@ -362,7 +373,9 @@ export class AttendanceService {
         }
 
         console.log('addOrUpdateRecord: Final record to save:', record);
-        this.saveRecords(currentRecords);
+        this.loadingService.show();
+        await this.saveRecords(currentRecords);
+        this.loadingService.hide();
         console.log('addOrUpdateRecord: Saved. New total records:', this.records().length);
     }
 
@@ -389,6 +402,7 @@ export class AttendanceService {
         }
 
         // Delete from API
+        this.loadingService.show();
         try {
             const response = await fetch(`${this.API_URL}/attendance/${user.id}/${dateIso}`, {
                 method: 'DELETE'
@@ -401,6 +415,8 @@ export class AttendanceService {
             }
         } catch (error) {
             console.error('Error deleting attendance from API:', error);
+        } finally {
+            this.loadingService.hide();
         }
     }
 }

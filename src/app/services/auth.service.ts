@@ -1,5 +1,6 @@
 import { Injectable, signal } from '@angular/core';
 import { StorageService } from './storage.service';
+import { LoadingService } from './loading.service';
 import { Router } from '@angular/router';
 import { environment } from '../../environments/environment';
 
@@ -19,7 +20,11 @@ export class AuthService {
     private employees: Employee[] = [];
     private readonly API_URL = environment.apiUrl;
 
-    constructor(private storageService: StorageService, private router: Router) {
+    constructor(
+        private storageService: StorageService,
+        private router: Router,
+        private loadingService: LoadingService
+    ) {
         this.loadEmployees();
         this.loadUser();
     }
@@ -116,6 +121,7 @@ export class AuthService {
             };
         }
 
+        this.loadingService.show();
         try {
             const response = await fetch(`${this.API_URL}/employees`, {
                 method: 'POST',
@@ -150,6 +156,8 @@ export class AuthService {
                 success: false,
                 message: 'Registration failed. Please check your connection.'
             };
+        } finally {
+            this.loadingService.hide();
         }
     }
 
@@ -167,6 +175,7 @@ export class AuthService {
     }
 
     async updateEmployee(id: string, name: string, mobile: string, password?: string): Promise<{ success: boolean; message: string }> {
+        this.loadingService.show();
         try {
             const normalizedMobile = mobile.replace(/\D/g, '');
             const updateData: any = { name, mobile: normalizedMobile };
@@ -208,10 +217,13 @@ export class AuthService {
                 success: false,
                 message: 'Update failed. Please try again.'
             };
+        } finally {
+            this.loadingService.hide();
         }
     }
 
     async deleteEmployee(id: string): Promise<{ success: boolean; message: string }> {
+        this.loadingService.show();
         try {
             const response = await fetch(`${this.API_URL}/employees/${id}`, {
                 method: 'DELETE'
@@ -237,6 +249,8 @@ export class AuthService {
                 success: false,
                 message: 'Delete failed. Please try again.'
             };
+        } finally {
+            this.loadingService.hide();
         }
     }
 }
