@@ -49,7 +49,13 @@ export class ReportComponent {
   manualOutPeriod = signal('AM'); // AM or PM
 
   records = computed(() => {
-    return this.attendanceService.getRecordsByMonth(this.selectedMonth(), this.selectedYear())
+    // Access sortedRecords to create dependency on the signal
+    const allRecords = this.attendanceService.sortedRecords();
+    return allRecords
+      .filter(r => {
+        const d = new Date(r.date);
+        return d.getMonth() === this.selectedMonth() && d.getFullYear() === this.selectedYear();
+      })
       .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
   });
 

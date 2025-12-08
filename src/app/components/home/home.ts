@@ -53,13 +53,22 @@ export class HomeComponent {
   // Current time ticker for elapsed time
   currentTime = signal(new Date());
   
-  // Elapsed time since clock in
+  // Today's clock out time
+  todayClockOutTime = computed(() => {
+    const todayRecord = this.attendanceService.getTodayRecord();
+    return todayRecord?.outTime || null;
+  });
+  
+  // Elapsed time since clock in (or total time if clocked out)
   elapsedTime = computed(() => {
     const inTime = this.todayClockInTime();
     if (!inTime) return '';
-    const now = this.currentTime().getTime();
+    
+    const outTime = this.todayClockOutTime();
+    const endTime = outTime ? new Date(outTime).getTime() : this.currentTime().getTime();
     const start = new Date(inTime).getTime();
-    const diff = now - start;
+    const diff = endTime - start;
+    
     const hours = Math.floor(diff / (1000 * 60 * 60));
     const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
     const seconds = Math.floor((diff % (1000 * 60)) / 1000);

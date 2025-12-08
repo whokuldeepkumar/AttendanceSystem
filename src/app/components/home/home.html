@@ -23,7 +23,7 @@
         <span class="clock-time">{{ todayClockInTime() | date:'shortTime' }}</span>
       </div>
       <div class="elapsed-time">
-        <span class="elapsed-label">Time Elapsed:</span>
+        <span class="elapsed-label">{{ todayClockOutTime() ? 'Total Time:' : 'Time Elapsed:' }}</span>
         <span class="elapsed-value">{{ elapsedTime() }}</span>
       </div>
     </div>
