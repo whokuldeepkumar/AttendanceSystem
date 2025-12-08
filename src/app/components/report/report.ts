@@ -67,6 +67,47 @@ export class ReportComponent {
     if (!this.authService.isAuthenticated()) {
       this.router.navigate(['/login']);
     }
+    
+    // Check if navigated with edit record
+    const navigation = this.router.getCurrentNavigation();
+    if (navigation?.extras?.state?.['editRecord']) {
+      const record = navigation.extras.state['editRecord'];
+      this.loadRecordForEdit(record);
+    }
+  }
+
+  loadRecordForEdit(record: any) {
+    this.manualDate.set(record.date);
+    
+    if (record.inTime) {
+      const inDate = new Date(record.inTime);
+      let hours = inDate.getHours();
+      const minutes = inDate.getMinutes();
+      const period = hours >= 12 ? 'PM' : 'AM';
+      hours = hours % 12 || 12;
+      
+      this.manualIn.set(String(hours));
+      this.manualInMin.set(String(minutes).padStart(2, '0'));
+      this.manualInPeriod.set(period);
+    }
+    
+    if (record.outTime) {
+      const outDate = new Date(record.outTime);
+      let hours = outDate.getHours();
+      const minutes = outDate.getMinutes();
+      const period = hours >= 12 ? 'PM' : 'AM';
+      hours = hours % 12 || 12;
+      
+      this.manualOut.set(String(hours));
+      this.manualOutMin.set(String(minutes).padStart(2, '0'));
+      this.manualOutPeriod.set(period);
+    }
+    
+    this.showManualModal.set(true);
+  }
+
+  editRecord(record: any) {
+    this.loadRecordForEdit(record);
   }
 
   // Mark modal state (Mark Leave / Sat Off / Sun Off)
@@ -181,12 +222,20 @@ export class ReportComponent {
       return '';
     }
     
-    if (h < 1 || h > 12 || m < 0 || m > 59) {
+    if (h < 0 || h > 12 || m < 0 || m > 59) {
       console.error('Values out of range:', { h, m });
       return '';
     }
     
     let hour24 = h;
+    
+    // Handle 0:0 as 12:00 AM
+    if (h === 0) {
+      hour24 = period === 'AM' ? 0 : 12;
+      const formatted = `${String(hour24).padStart(2, '0')}:${String(m).padStart(2, '0')}:00`;
+      console.log('Converted 0:0 to 24hr:', formatted);
+      return formatted;
+    }
     
     // Handle AM/PM conversion
     if (period === 'PM' && h !== 12) {
@@ -217,15 +266,15 @@ export class ReportComponent {
 
     console.log('Form inputs - inHour:', inHour, 'inMin:', inMin, 'outHour:', outHour, 'outMin:', outMin);
 
-    // Validate that hour is a valid number
-    if ((inHour && (isNaN(+inHour) || +inHour < 1 || +inHour > 12)) || 
+    // Validate that hour is a valid number (0-12 for 12-hour format)
+    if ((inHour && (isNaN(+inHour) || +inHour < 0 || +inHour > 12)) || 
         (inMin && (isNaN(+inMin) || +inMin < 0 || +inMin > 59))) {
       this.toastService.error('Please enter valid In time');
       console.error('Invalid In time:', inHour, inMin);
       return;
     }
 
-    if ((outHour && (isNaN(+outHour) || +outHour < 1 || +outHour > 12)) || 
+    if ((outHour && (isNaN(+outHour) || +outHour < 0 || +outHour > 12)) || 
         (outMin && (isNaN(+outMin) || +outMin < 0 || +outMin > 59))) {
       this.toastService.error('Please enter valid Out time');
       console.error('Invalid Out time:', outHour, outMin);

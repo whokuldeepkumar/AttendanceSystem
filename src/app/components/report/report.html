@@ -42,7 +42,7 @@
     <div class="form-row">
       <label for="manualIn">In Time</label>
       <div class="time-input-group">
-        <input id="manualIn" type="number" min="1" max="12" placeholder="HH" class="glass-input time-number" [ngModel]="manualIn()" (ngModelChange)="manualIn.set($event)" name="manualIn">
+        <input id="manualIn" type="number" min="0" max="12" placeholder="HH" class="glass-input time-number" [ngModel]="manualIn()" (ngModelChange)="manualIn.set($event)" name="manualIn">
         <span class="time-separator">:</span>
         <input id="manualInMin" type="number" min="0" max="59" placeholder="MM" class="glass-input time-number" [ngModel]="manualInMin()" (ngModelChange)="manualInMin.set($event)" name="manualInMin">
         <select class="glass-input period-select" [ngModel]="manualInPeriod()" (ngModelChange)="manualInPeriod.set($event)" name="manualInPeriod">
@@ -55,7 +55,7 @@
     <div class="form-row">
       <label for="manualOut">Out Time</label>
       <div class="time-input-group">
-        <input id="manualOut" type="number" min="1" max="12" placeholder="HH" class="glass-input time-number" [ngModel]="manualOut()" (ngModelChange)="manualOut.set($event)" name="manualOut">
+        <input id="manualOut" type="number" min="0" max="12" placeholder="HH" class="glass-input time-number" [ngModel]="manualOut()" (ngModelChange)="manualOut.set($event)" name="manualOut">
         <span class="time-separator">:</span>
         <input id="manualOutMin" type="number" min="0" max="59" placeholder="MM" class="glass-input time-number" [ngModel]="manualOutMin()" (ngModelChange)="manualOutMin.set($event)" name="manualOutMin">
         <select class="glass-input period-select" [ngModel]="manualOutPeriod()" (ngModelChange)="manualOutPeriod.set($event)" name="manualOutPeriod">
@@ -128,43 +128,45 @@
         <span class="record-count">{{ records().length }} days</span>
       </div>
 
-      <div class="attendance-grid">
-        <div *ngFor="let record of records()" class="attendance-card" [ngClass]="getFinalAttendanceClass(record)">
-          <div class="card-header">
-            <div class="date-info">
-              <span class="date">{{ record.date | date:'dd MMM' }}</span>
-              <span class="day">{{ record.date | date:'EEEE' }}</span>
-            </div>
-            <button class="btn-delete-icon" (click)="deleteRecord(record.date)" title="Delete record">🗑️</button>
-          </div>
-          
-          <div class="card-body">
-            <div class="info-row">
-              <span class="label">In:</span>
-              <span class="value">{{ record.inTime ? (record.inTime | date:'shortTime') : '-' }}</span>
-            </div>
-            <div class="info-row">
-              <span class="label">Out:</span>
-              <span class="value">{{ record.outTime ? (record.outTime | date:'shortTime') : '-' }}</span>
-            </div>
-            <div class="info-row">
-              <span class="label">Duration:</span>
-              <span class="value" [ngClass]="getDurationStatus(record.duration).isSufficient ? 'duration-good' : 'duration-bad'">
+      <div class="table-responsive">
+        <table class="records-table">
+          <thead>
+            <tr>
+              <th>Date</th>
+              <th>Day</th>
+              <th>In Time</th>
+              <th>Out Time</th>
+              <th>Duration</th>
+              <th>Final Attendance</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let record of records()">
+              <td>{{ record.date | date:'dd MMM yyyy' }}</td>
+              <td>{{ record.date | date:'EEEE' }}</td>
+              <td>{{ record.inTime ? (record.inTime | date:'shortTime') : '-' }}</td>
+              <td>{{ record.outTime ? (record.outTime | date:'shortTime') : '-' }}</td>
+              <td [ngClass]="getDurationStatus(record.duration).isSufficient ? 'duration-good' : 'duration-bad'">
                 {{ getDurationStatus(record.duration).displayText }}
-              </span>
-            </div>
-          </div>
-          
-          <div class="card-footer">
-            <span class="attendance-badge" [ngClass]="getFinalAttendanceClass(record)">
-              {{ getFinalAttendance(record) }}
-            </span>
-          </div>
-        </div>
-        
-        <div *ngIf="records().length === 0" class="no-records-grid">
-          <p>No records found for this period.</p>
-        </div>
+              </td>
+              <td>
+                <span class="attendance-badge" [ngClass]="getFinalAttendanceClass(record)">
+                  {{ getFinalAttendance(record) }}
+                </span>
+              </td>
+              <td>
+                <div class="action-buttons">
+                  <button class="btn-edit-icon" (click)="editRecord(record)" title="Edit record">✏️</button>
+                  <button class="btn-delete-icon" (click)="deleteRecord(record.date)" title="Delete record">🗑️</button>
+                </div>
+              </td>
+            </tr>
+            <tr *ngIf="records().length === 0">
+              <td colspan="7" class="no-records">No records found for this period.</td>
+            </tr>
+          </tbody>
+        </table>
       </div>
     </div>
   </div>

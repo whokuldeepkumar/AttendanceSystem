@@ -80,7 +80,7 @@ export class AttendanceService {
         return found;
     }
 
-    async clockIn() {
+    async clockIn(customTime?: Date) {
         const user = this.authService.currentUser();
         if (!user) {
             console.error('clockIn: No user logged in');
@@ -88,7 +88,7 @@ export class AttendanceService {
         }
 
         const today = new Date().toISOString().split('T')[0];
-        const now = new Date().toISOString();
+        const now = customTime ? customTime.toISOString() : new Date().toISOString();
 
         let currentRecords = this.records();
         const existingRecordIndex = currentRecords.findIndex(r => r.date === today);
@@ -172,7 +172,7 @@ export class AttendanceService {
         await this.saveRecordToAPI(record);
     }
 
-    async clockOut() {
+    async clockOut(customTime?: Date) {
         const user = this.authService.currentUser();
         if (!user) {
             console.error('clockOut: No user logged in');
@@ -180,7 +180,7 @@ export class AttendanceService {
         }
 
         const today = new Date().toISOString().split('T')[0];
-        const now = new Date().toISOString();
+        const now = customTime ? customTime.toISOString() : new Date().toISOString();
 
         let currentRecords = this.records();
         const existingRecordIndex = currentRecords.findIndex(r => r.date === today);

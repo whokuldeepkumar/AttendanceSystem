@@ -90,6 +90,13 @@ export class EmployeeManagementComponent {
   }
 
   goBack() {
-    this.router.navigate(['/home']);
+    const navigation = this.router.getCurrentNavigation();
+    const state = navigation?.extras?.state || history.state;
+    
+    if (state?.['fromAdmin']) {
+      this.router.navigate(['/admin'], { state: { skipPin: true } });
+    } else {
+      this.router.navigate(['/home']);
+    }
   }
 }

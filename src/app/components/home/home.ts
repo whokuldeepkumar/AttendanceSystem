@@ -1,5 +1,6 @@
 import { Component, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { AuthService } from '../../services/auth.service';
 import { AttendanceService } from '../../services/attendance.service';
@@ -13,7 +14,7 @@ import { AttendanceStatsComponent } from '../stats/stats';
 @Component({
   selector: 'app-home',
   standalone: true,
-  imports: [CommonModule, ModalComponent, AttendanceStatsComponent],
+  imports: [CommonModule, FormsModule, ModalComponent, AttendanceStatsComponent],
   templateUrl: './home.html',
   styleUrls: ['./home.css']
 })
@@ -29,6 +30,14 @@ export class HomeComponent {
   markType = signal<'leave' | 'sat-off' | 'sun-off' | null>(null);
   todayHolidayName = signal<string | null>(null);
   todayLeaveStatus = signal<boolean>(false);
+  
+  // Clock time signals
+  clockInHour = signal<number | null>(null);
+  clockInMin = signal<number | null>(null);
+  clockInPeriod = signal<'AM' | 'PM'>('AM');
+  clockOutHour = signal<number | null>(null);
+  clockOutMin = signal<number | null>(null);
+  clockOutPeriod = signal<'AM' | 'PM'>('PM');
 
   // Get records for current month
   currentMonthRecords = computed(() => {
@@ -172,6 +181,16 @@ export class HomeComponent {
       this.toastService.info('You are on leave today');
       return;
     }
+    // Set current time
+    const now = new Date();
+    let hours = now.getHours();
+    const minutes = now.getMinutes();
+    const period = hours >= 12 ? 'PM' : 'AM';
+    hours = hours % 12 || 12;
+    
+    this.clockInHour.set(hours);
+    this.clockInMin.set(minutes);
+    this.clockInPeriod.set(period);
     this.showClockInModal.set(true);
   }
 
@@ -185,8 +204,10 @@ export class HomeComponent {
       if (todayRecord?.inTime) {
         this.toastService.warning('Already clocked in today');
       } else {
-        console.log('confirmClockIn: Calling attendanceService.clockIn()...');
-        await this.attendanceService.clockIn();
+        // Create custom time from inputs
+        const customTime = this.createCustomTime(this.clockInHour(), this.clockInMin(), this.clockInPeriod());
+        console.log('confirmClockIn: Calling attendanceService.clockIn() with time:', customTime);
+        await this.attendanceService.clockIn(customTime);
         console.log('confirmClockIn: clockIn() completed');
         this.toastService.success('Clocked in successfully!');
       }
@@ -204,6 +225,16 @@ export class HomeComponent {
       this.toastService.info(`Today is ${this.todayHolidayName()}`);
       return;
     }
+    // Set current time
+    const now = new Date();
+    let hours = now.getHours();
+    const minutes = now.getMinutes();
+    const period = hours >= 12 ? 'PM' : 'AM';
+    hours = hours % 12 || 12;
+    
+    this.clockOutHour.set(hours);
+    this.clockOutMin.set(minutes);
+    this.clockOutPeriod.set(period);
     this.showClockOutModal.set(true);
   }
 
@@ -219,8 +250,10 @@ export class HomeComponent {
       } else if (todayRecord?.outTime) {
         this.toastService.warning('Already clocked out today');
       } else {
-        console.log('confirmClockOut: Calling attendanceService.clockOut()...');
-        await this.attendanceService.clockOut();
+        // Create custom time from inputs
+        const customTime = this.createCustomTime(this.clockOutHour(), this.clockOutMin(), this.clockOutPeriod());
+        console.log('confirmClockOut: Calling attendanceService.clockOut() with time:', customTime);
+        await this.attendanceService.clockOut(customTime);
         console.log('confirmClockOut: clockOut() completed');
         this.toastService.success('Clocked out successfully!');
       }
@@ -240,6 +273,10 @@ export class HomeComponent {
   toggleTheme() {
     this.themeService.toggleTheme();
     this.toastService.info(`Switched to ${this.themeService.isDark() ? 'dark' : 'light'} mode`);
+  }
+
+  editRecord(record: any) {
+    this.router.navigate(['/report'], { state: { editRecord: record } });
   }
 
   deleteRecord(dateIso: string) {
@@ -282,6 +319,22 @@ export class HomeComponent {
   cancelMark() {
     this.showMarkModal.set(false);
     this.markType.set(null);
+  }
+  
+  createCustomTime(hour: number | null, min: number | null, period: 'AM' | 'PM'): Date {
+    const now = new Date();
+    let hours = hour || 0;
+    const minutes = min || 0;
+    
+    // Convert to 24-hour format
+    if (period === 'PM' && hours !== 12) {
+      hours += 12;
+    } else if (period === 'AM' && hours === 12) {
+      hours = 0;
+    }
+    
+    now.setHours(hours, minutes, 0, 0);
+    return now;
   }
 
   logout() {

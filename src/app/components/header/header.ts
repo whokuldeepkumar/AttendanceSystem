@@ -14,7 +14,7 @@ import { ModalComponent } from '../modal/modal';
   template: `
     <header class="app-header">
       <div class="header-content">
-        <div class="header-brand">
+        <div class="header-brand" (click)="goToHome()">
           <img src="/TimeTrack.png" alt="Time Track" class="brand-logo" />
           <h1 class="brand-name">Time Track</h1>
         </div>
@@ -291,5 +291,13 @@ export class HeaderComponent {
 
   goToEmployees() {
     this.router.navigate(['/employees']);
+  }
+
+  goToHome() {
+    if (this.authService.isAuthenticated()) {
+      this.router.navigate(['/home']);
+    } else {
+      this.router.navigate(['/login']);
+    }
   }
 }

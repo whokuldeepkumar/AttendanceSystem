@@ -1,0 +1,64 @@
+<div class="container bulk-container">
+  <div class="glass-card header-card mb-4">
+    <div class="header-content">
+      <button class="btn btn-secondary" (click)="goBack()">← Back</button>
+      <h2>Bulk Attendance Marking</h2>
+    </div>
+  </div>
+
+  <div class="glass-card">
+    <div class="date-section">
+      <label for="bulkDate">Select Date</label>
+      <input id="bulkDate" type="date" class="glass-input" [ngModel]="selectedDate()" (ngModelChange)="selectedDate.set($event)">
+    </div>
+
+    <div class="type-section">
+      <h3>Select Attendance Type</h3>
+      <div class="type-buttons">
+        <button class="btn btn-type" [class.active]="selectedType() === 'present'" (click)="selectType('present')">
+          ✓ Present
+        </button>
+        <button class="btn btn-type" [class.active]="selectedType() === 'leave'" (click)="selectType('leave')">
+          📋 Leave
+        </button>
+        <button class="btn btn-type" [class.active]="selectedType() === 'sat-off'" (click)="selectType('sat-off')">
+          📅 Saturday Off
+        </button>
+        <button class="btn btn-type" [class.active]="selectedType() === 'sun-off'" (click)="selectType('sun-off')">
+          📅 Sunday Off
+        </button>
+      </div>
+    </div>
+
+    <div class="selection-actions">
+      <button class="btn btn-outline" (click)="selectAll()">Select All</button>
+      <button class="btn btn-outline" (click)="deselectAll()">Deselect All</button>
+      <span class="selected-count">{{ selectedEmployees().size }} selected</span>
+    </div>
+
+    <div class="table-wrapper">
+      <table class="employees-table">
+        <thead>
+          <tr>
+            <th><input type="checkbox" (change)="$event.target.checked ? selectAll() : deselectAll()"></th>
+            <th>Name</th>
+            <th>Mobile</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let employee of employees()" [class.selected]="selectedEmployees().has(employee.id)">
+            <td><input type="checkbox" [checked]="selectedEmployees().has(employee.id)" (change)="toggleEmployee(employee.id)"></td>
+            <td>{{ employee.name }}</td>
+            <td>{{ employee.mobile }}</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="submit-section">
+      <button class="btn btn-primary btn-large" (click)="markAttendance()">
+        Mark Attendance
+      </button>
+    </div>
+  </div>
+</div>

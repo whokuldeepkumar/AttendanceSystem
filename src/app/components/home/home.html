@@ -79,9 +79,10 @@
               {{ getFinalAttendance(record) }}
             </td>
             <td>
-              <button class="btn btn-delete btn-sm" (click)="deleteRecord(record.date)" title="Delete record">
-                🗑️ Delete
-              </button>
+              <div class="action-buttons">
+                <button class="btn-edit-icon" (click)="editRecord(record)" title="Edit record">✏️</button>
+                <button class="btn-delete-icon" (click)="deleteRecord(record.date)" title="Delete record">🗑️</button>
+              </div>
             </td>
           </tr>
           <tr *ngIf="currentMonthRecords().length === 0" class="no-records">
@@ -100,23 +101,53 @@
 <app-modal
   [isOpen]="showClockInModal()"
   title="Clock In Confirmation"
-  message="Are you sure you want to clock in now?"
+  message="Set your clock in time:"
   confirmText="Clock In"
   cancelText="Cancel"
   (confirmed)="confirmClockIn()"
   (cancelled)="showClockInModal.set(false)"
-></app-modal>
+>
+  <div class="time-edit-form">
+    <div class="time-input-group">
+      <input type="number" min="0" max="12" placeholder="HH" class="glass-input time-number" 
+        [ngModel]="clockInHour()" (ngModelChange)="clockInHour.set($event)" name="clockInHour">
+      <span class="time-separator">:</span>
+      <input type="number" min="0" max="59" placeholder="MM" class="glass-input time-number" 
+        [ngModel]="clockInMin()" (ngModelChange)="clockInMin.set($event)" name="clockInMin">
+      <select class="glass-input period-select" 
+        [ngModel]="clockInPeriod()" (ngModelChange)="clockInPeriod.set($event)" name="clockInPeriod">
+        <option value="AM">AM</option>
+        <option value="PM">PM</option>
+      </select>
+    </div>
+  </div>
+</app-modal>
 
 <!-- Clock Out Confirmation Modal -->
 <app-modal
   [isOpen]="showClockOutModal()"
   title="Clock Out Confirmation"
-  message="Are you sure you want to clock out now?"
+  message="Set your clock out time:"
   confirmText="Clock Out"
   cancelText="Cancel"
   (confirmed)="confirmClockOut()"
   (cancelled)="showClockOutModal.set(false)"
-></app-modal>
+>
+  <div class="time-edit-form">
+    <div class="time-input-group">
+      <input type="number" min="0" max="12" placeholder="HH" class="glass-input time-number" 
+        [ngModel]="clockOutHour()" (ngModelChange)="clockOutHour.set($event)" name="clockOutHour">
+      <span class="time-separator">:</span>
+      <input type="number" min="0" max="59" placeholder="MM" class="glass-input time-number" 
+        [ngModel]="clockOutMin()" (ngModelChange)="clockOutMin.set($event)" name="clockOutMin">
+      <select class="glass-input period-select" 
+        [ngModel]="clockOutPeriod()" (ngModelChange)="clockOutPeriod.set($event)" name="clockOutPeriod">
+        <option value="AM">AM</option>
+        <option value="PM">PM</option>
+      </select>
+    </div>
+  </div>
+</app-modal>
 
 <!-- Mark Day Modal -->
 <app-modal

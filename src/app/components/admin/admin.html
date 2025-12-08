@@ -1,0 +1,51 @@
+<div class="container admin-container">
+  <!-- PIN Entry Screen -->
+  <div *ngIf="!isAuthenticated()" class="pin-screen">
+    <div class="glass-card pin-card">
+      <div class="pin-header">
+        <button class="btn btn-secondary" (click)="goBack()">← Back</button>
+      </div>
+      <div class="pin-content">
+        <div class="lock-icon">🔒</div>
+        <h2>Admin Access</h2>
+        <p>Enter 4-digit PIN to continue</p>
+        <input 
+          type="password" 
+          inputmode="numeric"
+          maxlength="4" 
+          class="pin-input" 
+          [value]="enteredPin()" 
+          (input)="onPinInput($event)"
+          placeholder="••••"
+          autofocus
+        >
+        <div *ngIf="showError()" class="pin-error">❌ Incorrect PIN</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Admin Panel (shown after authentication) -->
+  <div *ngIf="isAuthenticated()">
+    <div class="glass-card header-card mb-4">
+      <div class="header-content">
+        <button class="btn btn-secondary" (click)="goBack()">← Back</button>
+        <h2>Admin Panel</h2>
+        <div></div>
+      </div>
+    </div>
+
+    <div class="admin-grid">
+      <div class="admin-card" (click)="goToEmployees()">
+        <div class="card-icon">👥</div>
+        <h3>Employee Management</h3>
+        <p>Add, edit, and manage employee records</p>
+      </div>
+
+      <div class="admin-card" (click)="goToBulkAttendance()">
+        <div class="card-icon">📋</div>
+        <h3>Bulk Attendance</h3>
+        <p>Mark attendance for multiple employees at once</p>
+      </div>
+    </div>
+  </div>
+</div>

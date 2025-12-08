@@ -16,5 +16,13 @@ export const routes: Routes = [
     path: 'employees',
     loadComponent: () => import('./components/employee-management/employee-management').then(m => m.EmployeeManagementComponent)
   },
+  {
+    path: 'bulk-attendance',
+    loadComponent: () => import('./components/bulk-attendance/bulk-attendance').then(m => m.BulkAttendanceComponent)
+  },
+  {
+    path: 'admin',
+    loadComponent: () => import('./components/admin/admin').then(m => m.AdminComponent)
+  },
   { path: '**', redirectTo: 'login' }
 ];
