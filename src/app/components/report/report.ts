@@ -81,7 +81,9 @@ export class ReportComponent {
   }
 
   loadRecordForEdit(record: any) {
-    this.manualDate.set(record.date);
+    // Extract date part only (YYYY-MM-DD)
+    const dateOnly = record.date.split('T')[0];
+    this.manualDate.set(dateOnly);
     
     if (record.inTime) {
       const inDate = new Date(record.inTime);
@@ -251,7 +253,7 @@ export class ReportComponent {
     return formatted;
   }
 
-  confirmManualEntry() {
+  async confirmManualEntry() {
     const date = this.manualDate();
     if (!date) {
       this.toastService.error('Please select a date');
@@ -292,6 +294,10 @@ export class ReportComponent {
       }
       // Create date in local timezone to avoid UTC offset issues
       const dateObj = new Date(`${d}T${time24}`);
+      if (isNaN(dateObj.getTime())) {
+        console.error('Invalid date created:', d, time24);
+        return null;
+      }
       console.log('Created ISO string:', d, time24, '=> ', dateObj.toISOString());
       return dateObj.toISOString();
     };
@@ -316,10 +322,10 @@ export class ReportComponent {
 
     try {
       console.log('Before save - current records:', this.attendanceService.sortedRecords().length);
-      this.attendanceService.addOrUpdateRecord(date, inIso, outIso);
+      await this.attendanceService.addOrUpdateRecord(date, inIso, outIso);
       
       // Force reload to ensure UI updates
-      this.attendanceService.loadRecords();
+      await this.attendanceService.loadRecords();
       
       // Verify record was saved by checking service
       const savedRecords = this.attendanceService.sortedRecords();
@@ -412,10 +418,11 @@ export class ReportComponent {
     this.showDeleteModal.set(true);
   }
   
-  confirmDelete() {
+  async confirmDelete() {
     const dateIso = this.deleteRecordDate();
     if (dateIso) {
-      this.attendanceService.deleteRecord(dateIso);
+      await this.attendanceService.deleteRecord(dateIso);
+      await this.attendanceService.loadRecords();
       this.toastService.success('Record deleted successfully');
     }
     this.showDeleteModal.set(false);

@@ -1,4 +1,12 @@
-<div class="container home-container">
+<!-- Fullscreen Loader -->
+<div *ngIf="isInitializing()" class="fullscreen-loader">
+  <div class="loader-content">
+    <div class="spinner-large"></div>
+    <p>Loading attendance data...</p>
+  </div>
+</div>
+
+<div *ngIf="!isInitializing()" class="container home-container">
 
   <!-- Attendance Statistics -->
   <app-attendance-stats [records]="currentMonthRecords()"></app-attendance-stats>
@@ -52,7 +60,7 @@
     <div *ngIf="!isLoading() && canShowMarkOptions()" class="mark-options">
       <button class="btn btn-mark" (click)="openMarkModal('1st-half')">🌅 1st Half Day</button>
       <button class="btn btn-mark" (click)="openMarkModal('2nd-half')">🌆 2nd Half Day</button>
-      <button class="btn btn-mark" (click)="openMarkModal('absent')">❌ Absent</button>
+      <button class="btn btn-mark" (click)="openMarkModal('absent')" *ngIf="!todayClockInTime()">❌ Absent</button>
       <button class="btn btn-mark" (click)="openMarkModal('leave')">📋 Leave</button>
       <button class="btn btn-mark" (click)="openMarkModal('sat-off')">📅 Sat Off</button>
       <button class="btn btn-mark" (click)="openMarkModal('sun-off')">📅 Sun Off</button>
@@ -90,7 +98,7 @@
              [class.special]="day.record && isSpecialDay(day.record)">
           <div class="calendar-date" *ngIf="day.date">{{ day.date }}</div>
           <div class="calendar-label" *ngIf="day.record">
-            {{ getFinalAttendance(day.record) }}
+            {{ isToday(day.dateStr) && day.record.inTime && !day.record.outTime ? elapsedTime() : getFinalAttendance(day.record) }}
           </div>
         </div>
       </div>
@@ -138,7 +146,7 @@
             <td data-label="In Time">{{ record.inTime ? (record.inTime | date:'shortTime') : '-' }}</td>
             <td data-label="Out Time">{{ record.outTime ? (record.outTime | date:'shortTime') : '-' }}</td>
             <td data-label="Duration" [ngClass]="getDurationStatus(record.duration).isSufficient ? 'duration-good' : 'duration-bad'">
-              {{ getDurationStatus(record.duration).displayText }}
+              {{ isToday(record.date.split('T')[0]) && record.inTime && !record.outTime ? elapsedTime() : getDurationStatus(record.duration).displayText }}
             </td>
             <td data-label="Final Attendance" [ngClass]="getFinalAttendanceClass(record)">
               {{ getFinalAttendance(record) }}

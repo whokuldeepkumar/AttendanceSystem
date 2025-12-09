@@ -21,6 +21,7 @@ import { AttendanceStatsComponent } from '../stats/stats';
 export class HomeComponent {
   currentUser;
   isLoading = signal(false);
+  isInitializing = signal(true);
   get isDarkMode() { return this.themeService.isDark(); }
   
   // Modal states
@@ -168,22 +169,28 @@ export class HomeComponent {
     this.currentUser = this.authService.currentUser;
     if (!this.authService.isAuthenticated()) {
       this.router.navigate(['/login']);
+      return;
     }
-    this.checkTodayStatus();
-    this.setupInstallPrompt();
-    this.checkInstallPrompt();
-    
-    // Wait for data to load then trigger button visibility check
-    setTimeout(() => {
-      console.log('Triggering button visibility check after data load');
-      this.canClockIn();
-      this.canClockOut();
-    }, 1000);
-    
-    // Update current time every second for elapsed time
-    setInterval(() => {
-      this.currentTime.set(new Date());
-    }, 1000);
+    this.initializeComponent();
+  }
+  
+  private async initializeComponent() {
+    try {
+      await this.attendanceService.loadRecords();
+      this.checkTodayStatus();
+      this.setupInstallPrompt();
+      this.checkInstallPrompt();
+      
+      // Update current time every second for elapsed time
+      setInterval(() => {
+        this.currentTime.set(new Date());
+      }, 1000);
+    } catch (error) {
+      console.error('Error initializing component:', error);
+      this.toastService.error('Failed to load data. Please refresh the page.');
+    } finally {
+      this.isInitializing.set(false);
+    }
   }
 
   // Calculate final attendance status

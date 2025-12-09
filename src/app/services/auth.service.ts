@@ -16,6 +16,7 @@ export interface Employee {
 })
 export class AuthService {
     private readonly USER_KEY = 'current_user';
+    private readonly LOGIN_DATE_KEY = 'login_date';
     currentUser = signal<Employee | null>(null);
     private employees: Employee[] = [];
     private readonly API_URL = environment.apiUrl;
@@ -26,7 +27,30 @@ export class AuthService {
         private loadingService: LoadingService
     ) {
         this.loadEmployees();
+        this.checkDailyLogin();
         this.loadUser();
+        this.setupMidnightLogout();
+    }
+    
+    private checkDailyLogin() {
+        const loginDate = this.storageService.getItem<string>(this.LOGIN_DATE_KEY);
+        const today = new Date().toISOString().split('T')[0];
+        
+        if (loginDate !== today) {
+            this.logout();
+        }
+    }
+    
+    private setupMidnightLogout() {
+        const now = new Date();
+        const tomorrow = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1);
+        const msUntilMidnight = tomorrow.getTime() - now.getTime();
+        
+        setTimeout(() => {
+            this.logout();
+            this.router.navigate(['/login']);
+            this.setupMidnightLogout();
+        }, msUntilMidnight);
     }
 
     private async loadEmployees(): Promise<void> {
@@ -100,7 +124,9 @@ export class AuthService {
             id: validation.employee!.id
         };
 
+        const today = new Date().toISOString().split('T')[0];
         this.storageService.setItem(this.USER_KEY, user);
+        this.storageService.setItem(this.LOGIN_DATE_KEY, today);
         this.currentUser.set(user);
 
         return {
@@ -163,6 +189,7 @@ export class AuthService {
 
     logout(): void {
         this.storageService.removeItem(this.USER_KEY);
+        this.storageService.removeItem(this.LOGIN_DATE_KEY);
         this.currentUser.set(null);
     }
 
