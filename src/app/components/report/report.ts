@@ -442,7 +442,9 @@ export class ReportComponent {
     const hours = parseInt(timeMatch[1], 10);
     const minutes = parseInt(timeMatch[2], 10);
     const totalHours = hours + (minutes / 60);
-    if (totalHours < 4.5) return 'Absent';
+    // Check if user is on leave for this date OR if hours are very low (< 4.5), treat as leave
+    const dateStr = record.date.split('T')[0];
+    if (this.leaveService.isOnLeave(dateStr) || totalHours < 4.5) return 'Leave';
     if (totalHours >= 4.5 && totalHours < 8.5) return 'Half Day';
     return 'Full Day';
   }

@@ -76,6 +76,10 @@ export class HomeComponent {
     return `${hours}h ${minutes}m ${seconds}s`;
   });
 
+  // Calendar navigation
+  calendarMonth = signal(new Date().getMonth());
+  calendarYear = signal(new Date().getFullYear());
+  
   // Get records for current month
   currentMonthRecords = computed(() => {
     const now = new Date();
@@ -83,11 +87,16 @@ export class HomeComponent {
       .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
   });
   
+  // Get records for calendar month
+  calendarMonthRecords = computed(() => {
+    return this.attendanceService.getRecordsByMonth(this.calendarMonth(), this.calendarYear())
+      .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+  });
+  
   // Calendar data
   calendarDays = computed(() => {
-    const now = new Date();
-    const year = now.getFullYear();
-    const month = now.getMonth();
+    const year = this.calendarYear();
+    const month = this.calendarMonth();
     const firstDay = new Date(year, month, 1);
     const lastDay = new Date(year, month + 1, 0);
     const daysInMonth = lastDay.getDate();
@@ -103,7 +112,7 @@ export class HomeComponent {
     // Add days of the month
     for (let day = 1; day <= daysInMonth; day++) {
       const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
-      const record = this.currentMonthRecords().find(r => r.date.split('T')[0] === dateStr);
+      const record = this.calendarMonthRecords().find(r => r.date.split('T')[0] === dateStr);
       days.push({ date: day, dateStr, record });
     }
     
@@ -112,10 +121,10 @@ export class HomeComponent {
   
   currentMonthName = computed(() => {
     const months = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
-    return months[new Date().getMonth()];
+    return months[this.calendarMonth()];
   });
   
-  currentYear = computed(() => new Date().getFullYear());
+  currentYear = computed(() => this.calendarYear());
   
   isToday(dateStr: string | undefined): boolean {
     if (!dateStr) return false;
@@ -214,7 +223,10 @@ export class HomeComponent {
     const minutes = parseInt(timeMatch[2], 10);
     const totalHours = hours + (minutes / 60);
     
-    if (totalHours < 4.5) return 'Absent';
+    // Check if user is on leave for this date OR if hours are very low (< 4.5), treat as leave
+    const dateStr = record.date.split('T')[0];
+    if (this.leaveService.isOnLeave(dateStr) || totalHours < 4.5) return 'Leave';
+    
     if (totalHours >= 4.5 && totalHours < 8.5) return 'Half Day';
     return 'Full Day';
   }
@@ -416,11 +428,13 @@ export class HomeComponent {
         await this.attendanceService.markDay(today, 'Absent');
         this.toastService.success('Day marked as absent');
       } else if (type === 'leave') {
+        // Save to both leave service and attendance records
         this.leaveService.addLeave(today, 'Marked as leave');
+        await this.attendanceService.markDay(today, 'Leave');
         this.toastService.success('Day marked as leave');
       } else if (type === 'sat-off' || type === 'sun-off') {
         const label = type === 'sat-off' ? 'Saturday Off' : 'Sunday Off';
-        this.holidayService.addHoliday(today, label);
+        await this.attendanceService.markDay(today, label);
         this.toastService.success(`Day marked as ${label}`);
       }
       await this.attendanceService.loadRecords();
@@ -498,6 +512,30 @@ export class HomeComponent {
   dismissInstallPrompt() {
     localStorage.setItem('installPromptSeen', 'true');
     this.showInstallPrompt.set(false);
+  }
+
+  previousMonth() {
+    const month = this.calendarMonth();
+    const year = this.calendarYear();
+    
+    if (month === 0) {
+      this.calendarMonth.set(11);
+      this.calendarYear.set(year - 1);
+    } else {
+      this.calendarMonth.set(month - 1);
+    }
+  }
+  
+  nextMonth() {
+    const month = this.calendarMonth();
+    const year = this.calendarYear();
+    
+    if (month === 11) {
+      this.calendarMonth.set(0);
+      this.calendarYear.set(year + 1);
+    } else {
+      this.calendarMonth.set(month + 1);
+    }
   }
 
   logout() {

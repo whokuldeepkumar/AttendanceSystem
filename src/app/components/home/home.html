@@ -58,9 +58,9 @@
 
     <!-- Mark Options - Always visible -->
     <div *ngIf="!isLoading() && canShowMarkOptions()" class="mark-options">
-      <button class="btn btn-mark" (click)="openMarkModal('1st-half')">🌅 1st Half Day</button>
-      <button class="btn btn-mark" (click)="openMarkModal('2nd-half')">🌆 2nd Half Day</button>
-      <button class="btn btn-mark" (click)="openMarkModal('absent')" *ngIf="!todayClockInTime()">❌ Absent</button>
+      <!-- <button class="btn btn-mark" (click)="openMarkModal('1st-half')">🌅 1st Half Day</button> -->
+      <!-- <button class="btn btn-mark" (click)="openMarkModal('2nd-half')">🌆 2nd Half Day</button> -->
+      <!-- <button class="btn btn-mark" (click)="openMarkModal('absent')" *ngIf="!todayClockInTime()">❌ Absent</button> -->
       <button class="btn btn-mark" (click)="openMarkModal('leave')">📋 Leave</button>
       <button class="btn btn-mark" (click)="openMarkModal('sat-off')">📅 Sat Off</button>
       <button class="btn btn-mark" (click)="openMarkModal('sun-off')">📅 Sun Off</button>
@@ -75,7 +75,11 @@
 
   <!-- Calendar View -->
   <div class="glass-card calendar-card">
-    <h3 class="mb-3">{{ currentMonthName() }} {{ currentYear() }} Calendar</h3>
+    <div class="calendar-header-nav">
+      <button class="btn-nav" (click)="previousMonth()">←</button>
+      <h3>{{ currentMonthName() }} {{ currentYear() }} Calendar</h3>
+      <button class="btn-nav" (click)="nextMonth()">→</button>
+    </div>
     <div class="calendar">
       <div class="calendar-header">
         <div class="calendar-day-name">Sun</div>
@@ -99,6 +103,13 @@
           <div class="calendar-date" *ngIf="day.date">{{ day.date }}</div>
           <div class="calendar-label" *ngIf="day.record">
             {{ isToday(day.dateStr) && day.record.inTime && !day.record.outTime ? elapsedTime() : getFinalAttendance(day.record) }}
+          </div>
+          <div class="calendar-times" *ngIf="day.record && day.record.inTime">
+            <div class="time-in">In: {{ day.record.inTime | date:'shortTime' }}</div>
+            <div class="time-out" *ngIf="day.record.outTime">Out: {{ day.record.outTime | date:'shortTime' }}</div>
+            <div class="time-total" *ngIf="day.record.duration && day.record.duration.includes('h')">
+              {{ isToday(day.dateStr) && !day.record.outTime ? elapsedTime() : day.record.duration }}
+            </div>
           </div>
         </div>
       </div>
