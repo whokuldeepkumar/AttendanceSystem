@@ -1,0 +1,32 @@
+<div class="container report-container">
+  <!-- Full Page Loader -->
+  <div *ngIf="isLoading()" class="full-page-loader">
+    <div class="loader-content">
+      <div class="spinner"></div>
+      <p>Loading attendance data...</p>
+    </div>
+  </div>
+
+  <div class="glass-card header-card">
+    <button class="btn btn-secondary" (click)="goBack()">← Back</button>
+    <h2>Employee Attendance Report</h2>
+    <button class="btn btn-primary" (click)="exportToExcel()" [disabled]="isExporting() || isLoading()">
+      {{ isExporting() ? 'Exporting...' : '📥 Export to Excel' }}
+    </button>
+  </div>
+
+  <div class="glass-card month-nav">
+    <button class="btn-nav" (click)="previousMonth()">←</button>
+    <h3>{{ currentMonthName() }} {{ selectedYear() }}</h3>
+    <button class="btn-nav" (click)="nextMonth()">→</button>
+  </div>
+
+  <!-- Shared Report View Component -->
+  <app-attendance-report-view
+    [employeeData]="employeeData()"
+    [dayNumbers]="dayNumbers()"
+    [showDetailedRecords]="false"
+    [detailedRecords]="getDetailedAttendanceRecords()"
+    [isLoading]="isLoading()">
+  </app-attendance-report-view>
+</div>

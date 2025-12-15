@@ -24,5 +24,9 @@ export const routes: Routes = [
     path: 'admin',
     loadComponent: () => import('./components/admin/admin').then(m => m.AdminComponent)
   },
+  {
+    path: 'attendance-report',
+    loadComponent: () => import('./components/attendance-report/attendance-report').then(m => m.AttendanceReportComponent)
+  },
   { path: '**', redirectTo: 'login' }
 ];

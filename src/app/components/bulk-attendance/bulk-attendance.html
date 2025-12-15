@@ -1,5 +1,13 @@
 <div class="container bulk-container">
-  <div class="glass-card header-card mb-4">
+  <!-- Full Page Loader -->
+  <div *ngIf="isSaving()" class="full-page-loader">
+    <div class="loader-content">
+      <div class="spinner"></div>
+      <p>Saving attendance...</p>
+    </div>
+  </div>
+
+  <div class="glass-card header-card">
     <div class="header-content">
       <button class="btn btn-secondary" (click)="goBack()">← Back</button>
       <h2>Bulk Attendance Marking</h2>
@@ -36,12 +44,26 @@
         <button class="btn btn-type" [class.active]="selectedType() === 'sun-off'" (click)="selectType('sun-off')">
           📅 Sunday Off
         </button>
+        <button class="btn btn-type" [class.active]="selectedType() === 'holiday'" (click)="selectType('holiday')">
+          🎉 Holiday
+        </button>
+      </div>
+      
+      <div *ngIf="selectedType() === 'holiday'" class="holiday-input">
+        <label for="holidayName">Holiday Name</label>
+        <input id="holidayName" type="text" class="glass-input" placeholder="e.g., Diwali, Christmas, Holi" [ngModel]="holidayName()" (ngModelChange)="holidayName.set($event)">
+      </div>
+      
+      <div class="submit-section">
+        <button class="btn btn-primary btn-large" (click)="markAttendance()">
+          Mark Attendance
+        </button>
       </div>
     </div>
 
     <div class="selection-actions">
-      <button class="btn btn-outline" (click)="selectAll()">Select All</button>
-      <button class="btn btn-outline" (click)="deselectAll()">Deselect All</button>
+      <!-- <button class="btn btn-outline" (click)="selectAll()">Select All</button>
+      <button class="btn btn-outline" (click)="deselectAll()">Deselect All</button> -->
       <span class="selected-count">{{ selectedEmployees().size }} selected</span>
     </div>
 
@@ -63,11 +85,7 @@
         </tbody>
       </table>
     </div>
-
-    <div class="submit-section">
-      <button class="btn btn-primary btn-large" (click)="markAttendance()">
-        Mark Attendance
-      </button>
-    </div>
   </div>
+
+
 </div>
