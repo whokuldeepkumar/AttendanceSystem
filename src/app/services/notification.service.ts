@@ -4,22 +4,24 @@ import { Injectable } from '@angular/core';
   providedIn: 'root'
 })
 export class NotificationService {
-  isSupported(): boolean {
-    return 'Notification' in window;
-  }
-  
-  getPermissionStatus(): NotificationPermission {
-    return Notification.permission;
-  }
   private permissionGranted = false;
 
   constructor() {
     this.checkPermission();
   }
 
+  isSupported(): boolean {
+    return typeof window !== 'undefined' && 'Notification' in window && typeof Notification !== 'undefined';
+  }
+  
+  getPermissionStatus(): NotificationPermission | null {
+    if (!this.isSupported()) return null;
+    return Notification.permission;
+  }
+
   private checkPermission(): void {
-    if (!('Notification' in window)) {
-      console.log('This browser does not support notifications');
+    if (!this.isSupported()) {
+      console.log('This browser does not support notifications (iOS Safari)');
       return;
     }
 
@@ -30,23 +32,23 @@ export class NotificationService {
   }
 
   async requestPermission(): Promise<boolean> {
-    if (!('Notification' in window)) {
-      console.log('This browser does not support notifications');
-      return false;
-    }
-
-    if (Notification.permission === 'granted') {
-      this.permissionGranted = true;
-      console.log('Notification permission already granted');
-      return true;
-    }
-
-    if (Notification.permission === 'denied') {
-      console.log('Notification permission denied');
+    if (!this.isSupported()) {
+      console.log('This browser does not support notifications (iOS Safari)');
       return false;
     }
 
     try {
+      if (Notification.permission === 'granted') {
+        this.permissionGranted = true;
+        console.log('Notification permission already granted');
+        return true;
+      }
+
+      if (Notification.permission === 'denied') {
+        console.log('Notification permission denied');
+        return false;
+      }
+
       const permission = await Notification.requestPermission();
       this.permissionGranted = permission === 'granted';
       console.log('Notification permission:', permission);
@@ -58,6 +60,11 @@ export class NotificationService {
   }
 
   async showNotification(title: string, options?: NotificationOptions): Promise<void> {
+    if (!this.isSupported()) {
+      console.log('Notifications not supported on this browser (iOS Safari)');
+      return;
+    }
+
     console.log('Attempting to show notification:', title);
     console.log('Permission status:', Notification.permission);
     
@@ -81,7 +88,6 @@ export class NotificationService {
       console.log('Creating notification with options:', defaultOptions);
       const notification = new Notification(title, defaultOptions);
       
-      // Vibrate on mobile devices
       if ('vibrate' in navigator) {
         navigator.vibrate([200, 100, 200]);
       }
@@ -99,6 +105,11 @@ export class NotificationService {
   }
 
   async showClockOutReminder(hoursElapsed: number): Promise<void> {
+    if (!this.isSupported()) {
+      console.log('Clock out reminder: Notifications not supported on iOS Safari');
+      return;
+    }
+
     const hours = Math.floor(hoursElapsed);
     const minutes = Math.floor((hoursElapsed - hours) * 60);
     
