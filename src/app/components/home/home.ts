@@ -60,6 +60,27 @@ export class HomeComponent {
     return todayRecord?.outTime || null;
   });
   
+  // Predicted attendance status based on clock out time
+  predictedAttendance = computed(() => {
+    const inTime = this.todayClockInTime();
+    if (!inTime) return '';
+    
+    const outHour = this.clockOutHour();
+    const outMin = this.clockOutMin();
+    const outPeriod = this.clockOutPeriod();
+    
+    if (outHour === null || outMin === null) return '';
+    
+    const customOutTime = this.createCustomTime(outHour, outMin, outPeriod);
+    const inTimeMs = new Date(inTime).getTime();
+    const outTimeMs = customOutTime.getTime();
+    const totalHours = (outTimeMs - inTimeMs) / (1000 * 60 * 60);
+    
+    if (totalHours < 4.5) return 'Leave will be marked (less than 4.5 hrs)';
+    if (totalHours < 8.5) return 'Half Day will be marked (less than 8.5 hrs)';
+    return 'Full Day will be marked (8.5+ hrs)';
+  });
+  
   // Elapsed time since clock in (or total time if clocked out)
   elapsedTime = computed(() => {
     const inTime = this.todayClockInTime();
@@ -291,6 +312,27 @@ export class HomeComponent {
       this.toastService.info('You are on leave today');
       return;
     }
+    
+    // Check if today is marked as weekend off or holiday
+    const todayRecord = this.attendanceService.getTodayRecord();
+    if (todayRecord) {
+      if (todayRecord.duration === 'Saturday Off') {
+        this.toastService.info('🎉 It\'s Saturday Off! Enjoy your weekend and relax! 😊');
+        return;
+      }
+      if (todayRecord.duration === 'Sunday Off') {
+        this.toastService.info('🎉 It\'s Sunday Off! Time to recharge and have fun! 😊');
+        return;
+      }
+      // Check for holiday (no inTime/outTime but has duration that's not Leave/Absent)
+      if (!todayRecord.inTime && !todayRecord.outTime && todayRecord.duration && 
+          todayRecord.duration !== 'Leave' && todayRecord.duration !== 'Absent' &&
+          todayRecord.duration !== 'Saturday Off' && todayRecord.duration !== 'Sunday Off') {
+        this.toastService.info(`🎊 It\'s ${todayRecord.duration}! Celebrate and enjoy the day! 🎉`);
+        return;
+      }
+    }
+    
     // Set current time
     const now = new Date();
     let hours = now.getHours();

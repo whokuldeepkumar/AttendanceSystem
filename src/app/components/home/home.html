@@ -99,6 +99,9 @@
              [class.full-day]="day.record && getFinalAttendance(day.record) === 'Full Day'"
              [class.half-day]="day.record && getFinalAttendance(day.record) === 'Half Day'"
              [class.absent]="day.record && getFinalAttendance(day.record) === 'Absent'"
+             [class.leave]="day.record && getFinalAttendance(day.record) === 'Leave'"
+             [class.weekend-off]="day.record && (getFinalAttendance(day.record) === 'Saturday Off' || getFinalAttendance(day.record) === 'Sunday Off')"
+             [class.holiday]="day.record && getFinalAttendance(day.record) !== 'Full Day' && getFinalAttendance(day.record) !== 'Half Day' && getFinalAttendance(day.record) !== 'Absent' && getFinalAttendance(day.record) !== 'Leave' && getFinalAttendance(day.record) !== 'Saturday Off' && getFinalAttendance(day.record) !== 'Sunday Off' && !day.record.inTime"
              [class.special]="day.record && isSpecialDay(day.record)">
           <div class="calendar-date" *ngIf="day.date">{{ day.date }}</div>
           <div class="calendar-label" *ngIf="day.record">
@@ -229,6 +232,10 @@
         <option value="AM">AM</option>
         <option value="PM">PM</option>
       </select>
+    </div>
+    <div *ngIf="predictedAttendance()" class="attendance-prediction">
+      <span class="prediction-icon">ℹ️</span>
+      <span class="prediction-text">{{ predictedAttendance() }}</span>
     </div>
   </div>
 </app-modal>
