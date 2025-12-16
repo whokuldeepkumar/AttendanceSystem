@@ -8,6 +8,7 @@ import { ToastService } from '../../services/toast.service';
 import { ThemeService } from '../../services/theme.service';
 import { HolidayService } from '../../services/holiday.service';
 import { LeaveService } from '../../services/leave.service';
+import { NotificationService } from '../../services/notification.service';
 import { ModalComponent } from '../modal/modal';
 import { AttendanceStatsComponent } from '../stats/stats';
 
@@ -194,7 +195,8 @@ export class HomeComponent {
     private toastService: ToastService,
     private themeService: ThemeService,
     private holidayService: HolidayService,
-    private leaveService: LeaveService
+    private leaveService: LeaveService,
+    private notificationService: NotificationService
   ) {
     this.currentUser = this.authService.currentUser;
     if (!this.authService.isAuthenticated()) {
@@ -214,12 +216,32 @@ export class HomeComponent {
       // Update current time every second for elapsed time
       setInterval(() => {
         this.currentTime.set(new Date());
+        this.checkClockOutReminder();
       }, 1000);
     } catch (error) {
       console.error('Error initializing component:', error);
       this.toastService.error('Failed to load data. Please refresh the page.');
     } finally {
       this.isInitializing.set(false);
+    }
+  }
+  
+  private lastNotificationTime = 0;
+  private checkClockOutReminder() {
+    const inTime = this.todayClockInTime();
+    const outTime = this.todayClockOutTime();
+    
+    // Only check if clocked in but not clocked out
+    if (!inTime || outTime) return;
+    
+    const now = new Date().getTime();
+    const inTimeMs = new Date(inTime).getTime();
+    const hoursElapsed = (now - inTimeMs) / (1000 * 60 * 60);
+    
+    // Show notification if more than 10 hours and not shown in last 30 minutes
+    if (hoursElapsed > 10 && (now - this.lastNotificationTime) > 30 * 60 * 1000) {
+      this.notificationService.showClockOutReminder(hoursElapsed);
+      this.lastNotificationTime = now;
     }
   }
 
