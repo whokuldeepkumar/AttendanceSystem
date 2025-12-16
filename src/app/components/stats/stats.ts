@@ -268,11 +268,14 @@ export class AttendanceStatsComponent {
     const currentDate = new Date();
     const currentMonth = currentDate.getMonth();
     const currentYear = currentDate.getFullYear();
+    const todayDate = new Date();
+    todayDate.setHours(0, 0, 0, 0);
 
-    // Filter records for current month
+    // Filter records for current month up to today (exclude future dates)
     const monthRecords = records.filter((r: AttendanceRecord) => {
       const date = new Date(r.date);
-      return date.getMonth() === currentMonth && date.getFullYear() === currentYear;
+      date.setHours(0, 0, 0, 0);
+      return date.getMonth() === currentMonth && date.getFullYear() === currentYear && date <= todayDate;
     });
 
     // Calculate present days with half day as 0.5
@@ -296,9 +299,8 @@ export class AttendanceStatsComponent {
     const sunOffDays = monthRecords.filter((r: AttendanceRecord) => r.duration === 'Sunday Off').length;
     
     // Calculate days from 1st to previous day (or total days if viewing past month)
-    const today = new Date();
-    const isCurrentMonth = currentMonth === today.getMonth() && currentYear === today.getFullYear();
-    const totalDays = isCurrentMonth ? (today.getDate() - 1) : new Date(currentYear, currentMonth + 1, 0).getDate();
+    const isCurrentMonth = currentMonth === currentDate.getMonth() && currentYear === currentDate.getFullYear();
+    const totalDays = isCurrentMonth ? (currentDate.getDate() - 1) : new Date(currentYear, currentMonth + 1, 0).getDate();
     
     let absentDays = 0;
     monthRecords.forEach((r: AttendanceRecord) => {
@@ -389,10 +391,13 @@ export class AttendanceStatsComponent {
     const currentDate = new Date();
     const currentMonth = currentDate.getMonth();
     const currentYear = currentDate.getFullYear();
+    const todayDate = new Date();
+    todayDate.setHours(0, 0, 0, 0);
     
     const monthRecords = records.filter((r: AttendanceRecord) => {
       const date = new Date(r.date);
-      return date.getMonth() === currentMonth && date.getFullYear() === currentYear;
+      date.setHours(0, 0, 0, 0);
+      return date.getMonth() === currentMonth && date.getFullYear() === currentYear && date <= todayDate;
     });
     
     let totalMinutes = 0;
