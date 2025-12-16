@@ -196,7 +196,8 @@ export class BulkAttendanceComponent {
       // Save to localStorage as backup/cache
       this.saveRecordsToLocalStorage(createdRecords);
 
-      this.toastService.success(`Marked ${employeeIds.length} employees as ${type}`);
+      const displayType = type === 'holiday' ? this.holidayName() : type;
+      this.toastService.success(`Marked ${employeeIds.length} employees as ${displayType}`);
       this.deselectAll();
       this.selectedType.set(null);
       this.holidayName.set('');
@@ -391,29 +392,35 @@ export class BulkAttendanceComponent {
       const days: { [key: number]: string } = {};
       let presentDays = 0;
       let leaveDays = 0;
-      let totalDays = 0;
 
       for (let day = 1; day <= daysCount; day++) {
         const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
         const record = records.find(r => r.date.split('T')[0] === dateStr);
 
         if (record) {
-          if (record.duration === 'Saturday Off' || record.duration === 'Sunday Off' || 
-              (!record.inTime && !record.outTime && record.duration && record.duration !== 'Leave' && record.duration !== 'Absent')) {
-            // Off day or holiday
+          if (record.duration === 'Saturday Off' || record.duration === 'Sunday Off') {
             days[day] = 'Off';
-            totalDays += 1;
+            presentDays += 1;
+          } else if (!record.inTime && !record.outTime && record.duration && record.duration !== 'Leave' && record.duration !== 'Absent') {
+            // Holiday (custom name like Diwali, Christmas, etc.)
+            days[day] = 'Off';
+            presentDays += 1;
           } else if (record.duration === 'Leave') {
             days[day] = 'L';
             leaveDays += 1;
           } else if (record.inTime && record.outTime) {
-            days[day] = 'P';
-            presentDays += 1;
-            totalDays += 1;
-          } else if (record.inTime) {
-            days[day] = 'P';
-            presentDays += 1;
-            totalDays += 1;
+            const hours = (new Date(record.outTime).getTime() - new Date(record.inTime).getTime()) / (1000 * 60 * 60);
+            if (hours >= 8.5) {
+              days[day] = 'P';
+              presentDays += 1;
+            } else if (hours >= 4.5) {
+              days[day] = 'H';
+              presentDays += 0.5;
+              leaveDays += 0.5;
+            } else {
+              days[day] = 'L';
+              leaveDays += 1;
+            }
           } else {
             days[day] = 'A';
           }
@@ -426,10 +433,10 @@ export class BulkAttendanceComponent {
         srNo: index + 1,
         empName: emp.name,
         days: days,
-        totalDays: totalDays,
+        totalDays: daysCount,
         presentDays: presentDays,
         leaveDays: leaveDays
       };
     });
-  });
+  })
 }

@@ -1,0 +1,74 @@
+<div class="container delete-container">
+  <!-- Full Page Loader -->
+  <div *ngIf="isDeleting()" class="full-page-loader">
+    <div class="loader-content">
+      <div class="spinner"></div>
+      <p>Deleting attendance...</p>
+    </div>
+  </div>
+
+  <div class="glass-card header-card">
+    <button class="btn btn-secondary" (click)="goBack()">← Back</button>
+    <h2>Delete Attendance</h2>
+  </div>
+
+  <div class="glass-card">
+    <div class="warning-banner">
+      <span class="warning-icon">⚠️</span>
+      <div>
+        <strong>Warning:</strong> This will permanently delete attendance records for the selected date for selected employees.
+      </div>
+    </div>
+
+    <div class="date-section">
+      <label for="deleteDate">Select Date to Delete</label>
+      <input 
+        id="deleteDate" 
+        type="date" 
+        class="glass-input" 
+        [ngModel]="selectedDate()" 
+        (ngModelChange)="selectedDate.set($event)">
+    </div>
+
+    <div class="selection-actions">
+      <span class="selected-count">{{ selectedEmployees().size }} selected</span>
+    </div>
+
+    <div class="table-wrapper">
+      <table class="employees-table">
+        <thead>
+          <tr>
+            <th><input type="checkbox" (change)="$event.target.checked ? selectAll() : deselectAll()"></th>
+            <th>Name</th>
+            <th>Mobile</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let employee of employees()" [class.selected]="selectedEmployees().has(employee.id)">
+            <td><input type="checkbox" [checked]="selectedEmployees().has(employee.id)" (change)="toggleEmployee(employee.id)"></td>
+            <td>{{ employee.name }}</td>
+            <td>{{ employee.mobile }}</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="action-section">
+      <button 
+        class="btn btn-danger btn-large" 
+        (click)="deleteAttendance()"
+        [disabled]="isDeleting()">
+        🗑️ Delete Attendance for {{ selectedDate() }}
+      </button>
+    </div>
+  </div>
+
+  <div style="margin-top: 30px;">
+    <h3 style="margin: 0 0 20px 0; font-size: 20px; padding: 0 20px;">Monthly Attendance Report</h3>
+    <app-attendance-report-view
+      [employeeData]="getEmployeeDayWiseData()"
+      [dayNumbers]="getDayNumbers()"
+      [isLoading]="false">
+    </app-attendance-report-view>
+  </div>
+</div>

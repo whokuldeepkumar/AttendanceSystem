@@ -21,12 +21,9 @@
     <button class="btn-nav" (click)="nextMonth()">→</button>
   </div>
 
-  <!-- Shared Report View Component -->
   <app-attendance-report-view
     [employeeData]="employeeData()"
     [dayNumbers]="dayNumbers()"
-    [showDetailedRecords]="false"
-    [detailedRecords]="getDetailedAttendanceRecords()"
     [isLoading]="isLoading()">
   </app-attendance-report-view>
 </div>

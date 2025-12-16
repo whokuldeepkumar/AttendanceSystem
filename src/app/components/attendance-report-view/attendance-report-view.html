@@ -1,9 +1,5 @@
 <div class="glass-card table-card" *ngIf="!isLoading">
-  <div *ngIf="employeeData.length === 0" class="empty-state">
-    <p>📊 No employee data to display.</p>
-  </div>
-
-  <div *ngIf="employeeData.length > 0" class="table-wrapper">
+  <div class="table-wrapper">
     <table class="report-table">
       <thead>
         <tr>
@@ -45,46 +41,4 @@
   <div class="legend-item"><span class="legend-dot off-dot"></span> Off - Weekend Off</div>
   <div class="legend-item"><span class="legend-dot absent-dot"></span> A - Absent</div>
   <div class="legend-item"><span class="legend-dot empty-dot"></span> - - No Record</div>
-</div>
-
-<div class="glass-card report-card mt-4" *ngIf="showDetailedRecords">
-  <div class="report-header">
-    <h3>Detailed Attendance Records</h3>
-  </div>
-
-  <div *ngIf="detailedRecords.length === 0" class="empty-state">
-    <p>📊 No detailed attendance records to display.</p>
-  </div>
-
-  <div class="report-table-wrapper" *ngIf="detailedRecords.length > 0">
-    <table class="report-table">
-      <thead>
-        <tr>
-          <th>Date</th>
-          <th>Day</th>
-          <th>Name</th>
-          <th>Status</th>
-          <th>In Time</th>
-          <th>Out Time</th>
-          <th>Duration</th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr *ngFor="let record of detailedRecords" 
-            [class.present]="record.status === 'Present'" 
-            [class.leave]="record.status === 'Leave'" 
-            [class.absent]="record.status === 'Absent'" 
-            [class.half]="record.status === 'Half Day'"
-            [class.off]="record.status === 'Off'">
-          <td>{{ record.date | date:'dd MMM yyyy' }}</td>
-          <td>{{ record.date | date:'EEEE' }}</td>
-          <td>{{ record.name }}</td>
-          <td><span class="status-badge">{{ record.status }}</span></td>
-          <td>{{ record.inTime ? (record.inTime | date:'shortTime') : '-' }}</td>
-          <td>{{ record.outTime ? (record.outTime | date:'shortTime') : '-' }}</td>
-          <td>{{ record.duration || '-' }}</td>
-        </tr>
-      </tbody>
-    </table>
-  </div>
 </div>

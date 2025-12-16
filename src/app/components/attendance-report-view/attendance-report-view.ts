@@ -1,4 +1,4 @@
-import { Component, Input, OnInit } from '@angular/core';
+import { Component, Input } from '@angular/core';
 import { CommonModule } from '@angular/common';
 
 @Component({
@@ -8,14 +8,8 @@ import { CommonModule } from '@angular/common';
   templateUrl: './attendance-report-view.html',
   styleUrls: ['./attendance-report-view.css']
 })
-export class AttendanceReportViewComponent implements OnInit {
+export class AttendanceReportViewComponent {
   @Input() employeeData: any[] = [];
   @Input() dayNumbers: number[] = [];
-  @Input() showDetailedRecords = false;
-  @Input() detailedRecords: any[] = [];
-  @Input() isLoading = false;
-
-  ngOnInit() {
-    // Component initialization
-  }
+  @Input() isLoading: boolean = false;
 }
