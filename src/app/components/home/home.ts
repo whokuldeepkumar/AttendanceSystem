@@ -264,8 +264,17 @@ export class HomeComponent {
     
     // Show notification if more than 10 hours and not shown in last 30 minutes
     if (hoursElapsed > 10 && (now - this.lastNotificationTime) > 30 * 60 * 1000) {
-      console.log('Triggering clock out reminder notification');
-      await this.notificationService.showClockOutReminder(hoursElapsed);
+      console.log('Triggering clock out reminder');
+      const hours = Math.floor(hoursElapsed);
+      const minutes = Math.floor((hoursElapsed - hours) * 60);
+      
+      if (this.notificationService.isSupported()) {
+        await this.notificationService.showClockOutReminder(hoursElapsed);
+      } else {
+        // Fallback for iOS: Show toast notification
+        this.toastService.info(`⏰ Time to Clock Out! You've been working for ${hours}h ${minutes}m! 😊 Don't forget to clock out!`);
+      }
+      
       this.lastNotificationTime = now;
     }
   }
