@@ -213,6 +213,11 @@ export class HomeComponent {
       this.setupInstallPrompt();
       this.checkInstallPrompt();
       
+      // Request notification permission on load
+      setTimeout(() => {
+        this.requestNotificationPermission();
+      }, 2000);
+      
       // Update current time every second for elapsed time
       setInterval(() => {
         this.currentTime.set(new Date());
@@ -226,8 +231,27 @@ export class HomeComponent {
     }
   }
   
+  private async requestNotificationPermission() {
+    if (!this.notificationService.isSupported()) {
+      console.log('Notifications not supported');
+      return;
+    }
+    
+    const status = this.notificationService.getPermissionStatus();
+    console.log('Current notification permission:', status);
+    
+    if (status === 'default') {
+      const granted = await this.notificationService.requestPermission();
+      if (granted) {
+        this.toastService.success('Notifications enabled! You\'ll be reminded to clock out after 10 hours.');
+      } else {
+        this.toastService.info('Enable notifications to get clock-out reminders.');
+      }
+    }
+  }
+  
   private lastNotificationTime = 0;
-  private checkClockOutReminder() {
+  private async checkClockOutReminder() {
     const inTime = this.todayClockInTime();
     const outTime = this.todayClockOutTime();
     
@@ -240,7 +264,8 @@ export class HomeComponent {
     
     // Show notification if more than 10 hours and not shown in last 30 minutes
     if (hoursElapsed > 10 && (now - this.lastNotificationTime) > 30 * 60 * 1000) {
-      this.notificationService.showClockOutReminder(hoursElapsed);
+      console.log('Triggering clock out reminder notification');
+      await this.notificationService.showClockOutReminder(hoursElapsed);
       this.lastNotificationTime = now;
     }
   }
