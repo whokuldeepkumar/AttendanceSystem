@@ -2,6 +2,7 @@ import { Injectable, signal, computed } from '@angular/core';
 import { StorageService } from './storage.service';
 import { AuthService } from './auth.service';
 import { LoadingService } from './loading.service';
+import { WeekendService } from './weekend.service';
 import { environment } from '../../environments/environment';
 
 export interface AttendanceRecord {
@@ -27,7 +28,8 @@ export class AttendanceService {
     constructor(
         private storageService: StorageService,
         private authService: AuthService,
-        private loadingService: LoadingService
+        private loadingService: LoadingService,
+        private weekendService: WeekendService
     ) {
         this.loadRecords();
     }
@@ -144,6 +146,13 @@ export class AttendanceService {
             return;
         }
 
+        // If marking weekend off, save globally and apply to all employees
+        if (label === 'Saturday Off' || label === 'Sunday Off') {
+            this.weekendService.addWeekendOff(dateIso, label);
+            await this.applyWeekendOffToAllEmployees(dateIso, label);
+            return;
+        }
+
         let currentRecords = this.records();
         const existingIndex = currentRecords.findIndex(r => r.date === dateIso);
 
@@ -178,6 +187,38 @@ export class AttendanceService {
         // Save to API
         this.loadingService.show();
         await this.saveRecordToAPI(record);
+        this.loadingService.hide();
+    }
+
+    private async applyWeekendOffToAllEmployees(dateIso: string, label: string) {
+        const users = this.authService.getAllUsers();
+        this.loadingService.show();
+        
+        for (const user of users) {
+            const key = `attendance_${user.id}`;
+            let userRecords = this.storageService.getItem<AttendanceRecord[]>(key) || [];
+            const existingIndex = userRecords.findIndex(r => r.date === dateIso);
+            
+            const record: AttendanceRecord = {
+                userId: user.id,
+                date: dateIso,
+                inTime: null,
+                outTime: null,
+                duration: label
+            };
+            
+            if (existingIndex > -1) {
+                userRecords[existingIndex].duration = label;
+            } else {
+                userRecords.push(record);
+            }
+            
+            this.storageService.setItem(key, userRecords);
+            await this.saveRecordToAPI(record);
+        }
+        
+        // Reload current user's records
+        await this.loadRecords();
         this.loadingService.hide();
     }
 
@@ -332,6 +373,34 @@ export class AttendanceService {
             const d = new Date(r.date);
             return d.getMonth() === month && d.getFullYear() === year;
         });
+    }
+
+    async getAllUsersRecords(): Promise<AttendanceRecord[]> {
+        try {
+            const response = await fetch(`${this.API_URL}/attendance/all`, {
+                method: 'GET',
+                headers: { 'Content-Type': 'application/json' }
+            }).catch(() => null);
+            
+            if (response?.ok) {
+                const data = await response.json();
+                if (data.success !== false && Array.isArray(data)) {
+                    return data;
+                }
+            }
+        } catch (error) {
+            // Silently fall back to localStorage
+        }
+        
+        // Fallback: load from localStorage for all users
+        const allRecords: AttendanceRecord[] = [];
+        const users = this.authService.getAllUsers();
+        users.forEach(user => {
+            const key = `attendance_${user.id}`;
+            const userRecords = this.storageService.getItem<AttendanceRecord[]>(key) || [];
+            allRecords.push(...userRecords);
+        });
+        return allRecords;
     }
 
     /**

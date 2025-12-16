@@ -1,5 +1,13 @@
 <div class="container bulk-container">
-  <div class="glass-card header-card mb-4">
+  <!-- Full Page Loader -->
+  <div *ngIf="isSaving()" class="full-page-loader">
+    <div class="loader-content">
+      <div class="spinner"></div>
+      <p>Saving attendance...</p>
+    </div>
+  </div>
+
+  <div class="glass-card header-card">
     <div class="header-content">
       <button class="btn btn-secondary" (click)="goBack()">← Back</button>
       <h2>Bulk Attendance Marking</h2>
@@ -7,14 +15,15 @@
   </div>
 
   <div class="glass-card">
-    <div class="date-section">
-      <label for="bulkDate">Select Date</label>
-      <input id="bulkDate" type="date" class="glass-input" [ngModel]="selectedDate()" (ngModelChange)="selectedDate.set($event)">
-    </div>
+    <div class="date-type-row">
+      <div class="date-section">
+        <label for="bulkDate">Select Date</label>
+        <input id="bulkDate" type="date" class="glass-input" [ngModel]="selectedDate()" (ngModelChange)="selectedDate.set($event)">
+      </div>
 
-    <div class="type-section">
-      <h3>Select Attendance Type</h3>
-      <div class="type-buttons">
+      <div class="type-section">
+        <h3>Select Attendance Type</h3>
+        <div class="type-buttons">
         <button class="btn btn-type" [class.active]="selectedType() === 'present'" (click)="selectType('present')">
           ✓ Present
         </button>
@@ -36,12 +45,27 @@
         <button class="btn btn-type" [class.active]="selectedType() === 'sun-off'" (click)="selectType('sun-off')">
           📅 Sunday Off
         </button>
+        <button class="btn btn-type" [class.active]="selectedType() === 'holiday'" (click)="selectType('holiday')">
+          🎉 Holiday
+        </button>
+        </div>
       </div>
+    </div>
+    
+    <div *ngIf="selectedType() === 'holiday'" class="holiday-input">
+      <label for="holidayName">Holiday Name</label>
+      <input id="holidayName" type="text" class="glass-input" placeholder="e.g., Diwali, Christmas, Holi" [ngModel]="holidayName()" (ngModelChange)="holidayName.set($event)">
+    </div>
+    
+    <div class="submit-section">
+      <button class="btn btn-primary btn-large" (click)="markAttendance()">
+        Mark Attendance
+      </button>
     </div>
 
     <div class="selection-actions">
-      <button class="btn btn-outline" (click)="selectAll()">Select All</button>
-      <button class="btn btn-outline" (click)="deselectAll()">Deselect All</button>
+      <!-- <button class="btn btn-outline" (click)="selectAll()">Select All</button>
+      <button class="btn btn-outline" (click)="deselectAll()">Deselect All</button> -->
       <span class="selected-count">{{ selectedEmployees().size }} selected</span>
     </div>
 
@@ -63,11 +87,14 @@
         </tbody>
       </table>
     </div>
+  </div>
 
-    <div class="submit-section">
-      <button class="btn btn-primary btn-large" (click)="markAttendance()">
-        Mark Attendance
-      </button>
-    </div>
+  <div style="margin-top: 30px;">
+    <h3 style="margin: 0 0 20px 0; font-size: 20px; padding: 0 20px;">Monthly Attendance Report</h3>
+    <app-attendance-report-view
+      [employeeData]="getEmployeeDayWiseData()"
+      [dayNumbers]="getDayNumbers()"
+      [isLoading]="false">
+    </app-attendance-report-view>
   </div>
 </div>

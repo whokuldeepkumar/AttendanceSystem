@@ -1,0 +1,44 @@
+<div class="glass-card table-card" *ngIf="!isLoading">
+  <div class="table-wrapper">
+    <table class="report-table">
+      <thead>
+        <tr>
+          <th class="sticky-col">Sr No</th>
+          <th class="sticky-col emp-name">Employee Name</th>
+          <th *ngFor="let day of dayNumbers">{{ day }}</th>
+          <th class="summary-col">Total Days</th>
+          <th class="summary-col">Present</th>
+          <th class="summary-col">Leave</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let emp of employeeData">
+          <td class="sticky-col">{{ emp.srNo }}</td>
+          <td class="sticky-col emp-name">{{ emp.empName }}</td>
+          <td *ngFor="let day of dayNumbers" 
+              [ngClass]="{
+                'present': emp.days[day] === 'P',
+                'half': emp.days[day] === 'H',
+                'leave': emp.days[day] === 'L',
+                'off': emp.days[day] === 'Off',
+                'absent': emp.days[day] === 'A'
+              }">
+            {{ emp.days[day] }}
+          </td>
+          <td class="summary-col">{{ emp.totalDays }}</td>
+          <td class="summary-col">{{ emp.presentDays }}</td>
+          <td class="summary-col">{{ emp.leaveDays }}</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<div class="legend">
+  <div class="legend-item"><span class="legend-dot present-dot"></span> P - Present</div>
+  <div class="legend-item"><span class="legend-dot half-dot"></span> H - Half Day</div>
+  <div class="legend-item"><span class="legend-dot leave-dot"></span> L - Leave</div>
+  <div class="legend-item"><span class="legend-dot off-dot"></span> Off - Weekend Off</div>
+  <div class="legend-item"><span class="legend-dot absent-dot"></span> A - Absent</div>
+  <div class="legend-item"><span class="legend-dot empty-dot"></span> - - No Record</div>
+</div>

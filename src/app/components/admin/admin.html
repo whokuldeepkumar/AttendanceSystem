@@ -46,6 +46,18 @@
         <h3>Bulk Attendance</h3>
         <p>Mark attendance for multiple employees at once</p>
       </div>
+
+      <div class="admin-card" (click)="goToAttendanceReport()">
+        <div class="card-icon">📊</div>
+        <h3>Attendance Report</h3>
+        <p>View all employees attendance report</p>
+      </div>
+
+      <div class="admin-card" (click)="goToDeleteAttendance()">
+        <div class="card-icon">🗑️</div>
+        <h3>Delete Attendance</h3>
+        <p>Delete all attendance records for a specific date</p>
+      </div>
     </div>
   </div>
 </div>

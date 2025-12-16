@@ -129,6 +129,25 @@ app.delete('/api/employees/:id', async (req, res) => {
 
 // ==================== ATTENDANCE ====================
 
+// GET /api/attendance - Get all attendance records
+app.get('/api/attendance', async (req, res) => {
+  try {
+    const result = await pool.query(
+      'SELECT * FROM attendance ORDER BY date DESC'
+    );
+    res.json(result.rows.map(row => ({
+      userId: row.user_id,
+      date: row.date,
+      inTime: row.in_time,
+      outTime: row.out_time,
+      duration: row.duration
+    })));
+  } catch (error) {
+    console.error('Error fetching all attendance:', error);
+    res.status(500).json({ success: false, message: 'Error fetching attendance' });
+  }
+});
+
 // GET /api/attendance/:userId - Get attendance for specific user
 app.get('/api/attendance/:userId', async (req, res) => {
   try {

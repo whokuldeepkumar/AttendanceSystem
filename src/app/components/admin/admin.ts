@@ -60,6 +60,14 @@ export class AdminComponent implements OnInit {
     this.router.navigate(['/bulk-attendance'], { state: { fromAdmin: true } });
   }
 
+  goToAttendanceReport() {
+    this.router.navigate(['/attendance-report'], { state: { fromAdmin: true } });
+  }
+
+  goToDeleteAttendance() {
+    this.router.navigate(['/delete-attendance'], { state: { fromAdmin: true } });
+  }
+
   goBack() {
     this.router.navigate(['/home']);
   }

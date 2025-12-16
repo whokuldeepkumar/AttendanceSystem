@@ -201,6 +201,10 @@ export class AuthService {
         return this.employees;
     }
 
+    getAllUsers(): Employee[] {
+        return this.employees;
+    }
+
     async updateEmployee(id: string, name: string, mobile: string, password?: string): Promise<{ success: boolean; message: string }> {
         this.loadingService.show();
         try {
