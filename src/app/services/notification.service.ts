@@ -4,10 +4,29 @@ import { Injectable } from '@angular/core';
   providedIn: 'root'
 })
 export class NotificationService {
+  isSupported(): boolean {
+    return 'Notification' in window;
+  }
+  
+  getPermissionStatus(): NotificationPermission {
+    return Notification.permission;
+  }
   private permissionGranted = false;
 
   constructor() {
-    this.requestPermission();
+    this.checkPermission();
+  }
+
+  private checkPermission(): void {
+    if (!('Notification' in window)) {
+      console.log('This browser does not support notifications');
+      return;
+    }
+
+    if (Notification.permission === 'granted') {
+      this.permissionGranted = true;
+      console.log('Notification permission already granted');
+    }
   }
 
   async requestPermission(): Promise<boolean> {
@@ -18,22 +37,37 @@ export class NotificationService {
 
     if (Notification.permission === 'granted') {
       this.permissionGranted = true;
+      console.log('Notification permission already granted');
       return true;
     }
 
-    if (Notification.permission !== 'denied') {
-      const permission = await Notification.requestPermission();
-      this.permissionGranted = permission === 'granted';
-      return this.permissionGranted;
+    if (Notification.permission === 'denied') {
+      console.log('Notification permission denied');
+      return false;
     }
 
-    return false;
+    try {
+      const permission = await Notification.requestPermission();
+      this.permissionGranted = permission === 'granted';
+      console.log('Notification permission:', permission);
+      return this.permissionGranted;
+    } catch (error) {
+      console.error('Error requesting notification permission:', error);
+      return false;
+    }
   }
 
-  showNotification(title: string, options?: NotificationOptions): void {
+  async showNotification(title: string, options?: NotificationOptions): Promise<void> {
+    console.log('Attempting to show notification:', title);
+    console.log('Permission status:', Notification.permission);
+    
     if (!this.permissionGranted) {
-      console.log('Notification permission not granted');
-      return;
+      console.log('Permission not granted, requesting...');
+      const granted = await this.requestPermission();
+      if (!granted) {
+        console.log('User denied notification permission');
+        return;
+      }
     }
 
     const defaultOptions: NotificationOptions = {
@@ -44,6 +78,7 @@ export class NotificationService {
     };
 
     try {
+      console.log('Creating notification with options:', defaultOptions);
       const notification = new Notification(title, defaultOptions);
       
       // Vibrate on mobile devices
@@ -52,19 +87,24 @@ export class NotificationService {
       }
       
       notification.onclick = () => {
+        console.log('Notification clicked');
         window.focus();
         notification.close();
       };
+      
+      console.log('Notification created successfully');
     } catch (error) {
       console.error('Error showing notification:', error);
     }
   }
 
-  showClockOutReminder(hoursElapsed: number): void {
+  async showClockOutReminder(hoursElapsed: number): Promise<void> {
     const hours = Math.floor(hoursElapsed);
     const minutes = Math.floor((hoursElapsed - hours) * 60);
     
-    this.showNotification(
+    console.log(`Showing clock out reminder for ${hours}h ${minutes}m`);
+    
+    await this.showNotification(
       '⏰ Time to Clock Out!',
       {
         body: `You've been working for ${hours}h ${minutes}m! 😊\nDon't forget to clock out and take a well-deserved break! 🎉`,
