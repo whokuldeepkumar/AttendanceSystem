@@ -15,6 +15,7 @@ import { ModalComponent } from '../modal/modal';
 })
 export class EmployeeManagementComponent {
   employees = signal<Employee[]>([]);
+  loading = signal(true);
   showEditModal = signal(false);
   showDeleteModal = signal(false);
   selectedEmployee = signal<Employee | null>(null);
@@ -34,9 +35,10 @@ export class EmployeeManagementComponent {
   }
 
   async loadEmployees() {
-    // Wait a bit for auth service to load employees from API
+    this.loading.set(true);
     await new Promise(resolve => setTimeout(resolve, 500));
     this.employees.set(this.authService.getEmployees());
+    this.loading.set(false);
   }
 
   openEditModal(employee: Employee) {

@@ -1,0 +1,66 @@
+<div class="container settings-container">
+  <!-- Loader -->
+  <div *ngIf="loading()" class="fullscreen-loader">
+    <div class="loader-content">
+      <div class="spinner-large"></div>
+      <p>{{ saving() ? 'Saving settings...' : 'Loading settings...' }}</p>
+    </div>
+  </div>
+
+  <div *ngIf="!loading()">
+    <div class="glass-card header-card mb-4">
+      <div class="header-content">
+        <button class="btn btn-secondary" (click)="goBack()">← Back</button>
+        <h2>App Settings</h2>
+        <div></div>
+      </div>
+    </div>
+
+    <div class="glass-card">
+      <h3 class="mb-3">General Settings</h3>
+      
+      <div *ngIf="message()" class="alert">{{ message() }}</div>
+
+      <div class="form-group">
+        <label for="companyName">Company Name</label>
+        <input 
+          id="companyName" 
+          type="text" 
+          class="glass-input" 
+          [(ngModel)]="companyName"
+          placeholder="Enter company name"
+        >
+      </div>
+
+      <div class="form-group">
+        <label for="adminPin">Admin Panel PIN (4 digits)</label>
+        <input 
+          id="adminPin" 
+          type="password" 
+          class="glass-input" 
+          [(ngModel)]="adminPin"
+          placeholder="Enter 4-digit PIN"
+          maxlength="4"
+        >
+      </div>
+
+      <div class="form-group">
+        <label for="appLogo">App Logo URL</label>
+        <input 
+          id="appLogo" 
+          type="text" 
+          class="glass-input" 
+          [(ngModel)]="appLogo"
+          placeholder="Enter logo URL (optional)"
+        >
+        <small class="help-text">Leave empty to use default logo</small>
+      </div>
+
+      <div class="action-footer">
+        <button class="btn btn-primary" (click)="saveSettings()">
+          Save Settings
+        </button>
+      </div>
+    </div>
+  </div>
+</div>

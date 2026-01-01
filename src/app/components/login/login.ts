@@ -5,6 +5,7 @@ import { Router } from '@angular/router';
 import { AuthService } from '../../services/auth.service';
 import { ToastService } from '../../services/toast.service';
 import { ModalComponent } from '../modal/modal';
+import { SettingsService } from '../../services/settings.service';
 
 @Component({
   selector: 'app-login',
@@ -26,7 +27,8 @@ export class LoginComponent {
   constructor(
     private authService: AuthService,
     private router: Router,
-    private toastService: ToastService
+    private toastService: ToastService,
+    public settingsService: SettingsService
   ) {
     if (this.authService.isAuthenticated()) {
       this.router.navigate(['/home']);

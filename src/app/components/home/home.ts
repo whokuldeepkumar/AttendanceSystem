@@ -9,6 +9,7 @@ import { ThemeService } from '../../services/theme.service';
 import { HolidayService } from '../../services/holiday.service';
 import { LeaveService } from '../../services/leave.service';
 import { NotificationService } from '../../services/notification.service';
+import { SettingsService } from '../../services/settings.service';
 import { ModalComponent } from '../modal/modal';
 import { AttendanceStatsComponent } from '../stats/stats';
 
@@ -196,7 +197,8 @@ export class HomeComponent {
     private themeService: ThemeService,
     private holidayService: HolidayService,
     private leaveService: LeaveService,
-    private notificationService: NotificationService
+    private notificationService: NotificationService,
+    public settingsService: SettingsService
   ) {
     this.currentUser = this.authService.currentUser;
     if (!this.authService.isAuthenticated()) {

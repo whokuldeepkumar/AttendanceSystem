@@ -2,6 +2,8 @@ import { Component, signal, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router, NavigationEnd } from '@angular/router';
+import { AuthService } from '../../services/auth.service';
+import { SettingsService } from '../../services/settings.service';
 
 @Component({
   selector: 'app-admin',
@@ -11,14 +13,23 @@ import { Router, NavigationEnd } from '@angular/router';
   styleUrls: ['./admin.css']
 })
 export class AdminComponent implements OnInit {
-  private readonly DEFAULT_PIN = '0590';
   isAuthenticated = signal(false);
   enteredPin = signal('');
   showError = signal(false);
 
-  constructor(private router: Router) {}
+  constructor(
+    private router: Router, 
+    private authService: AuthService,
+    private settingsService: SettingsService
+  ) {}
 
   ngOnInit() {
+    // Check if user is logged in
+    if (!this.authService.isAuthenticated()) {
+      this.router.navigate(['/login']);
+      return;
+    }
+
     const navigation = this.router.getCurrentNavigation();
     const state = navigation?.extras?.state || history.state;
     
@@ -40,7 +51,7 @@ export class AdminComponent implements OnInit {
   }
 
   verifyPin() {
-    if (this.enteredPin() === this.DEFAULT_PIN) {
+    if (this.enteredPin() === this.settingsService.getAdminPin()) {
       this.isAuthenticated.set(true);
       this.showError.set(false);
     } else {
@@ -66,6 +77,14 @@ export class AdminComponent implements OnInit {
 
   goToDeleteAttendance() {
     this.router.navigate(['/delete-attendance'], { state: { fromAdmin: true } });
+  }
+
+  goToLeaveManagement() {
+    this.router.navigate(['/leave-management'], { state: { fromAdmin: true } });
+  }
+
+  goToSettings() {
+    this.router.navigate(['/settings'], { state: { fromAdmin: true } });
   }
 
   goBack() {

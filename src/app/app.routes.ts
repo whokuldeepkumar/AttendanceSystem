@@ -32,5 +32,13 @@ export const routes: Routes = [
     path: 'delete-attendance',
     loadComponent: () => import('./components/delete-attendance/delete-attendance').then(m => m.DeleteAttendanceComponent)
   },
+  {
+    path: 'leave-management',
+    loadComponent: () => import('./components/leave-management/leave-management').then(m => m.LeaveManagementComponent)
+  },
+  {
+    path: 'settings',
+    loadComponent: () => import('./components/settings/settings').then(m => m.SettingsComponent)
+  },
   { path: '**', redirectTo: 'login' }
 ];
