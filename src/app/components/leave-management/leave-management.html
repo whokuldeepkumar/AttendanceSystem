@@ -39,8 +39,10 @@
             <th>Select</th>
             <th>ID</th>
             <th>Name</th>
+            <th>Carry Forward</th>
             <th>PL (Privilege Leave)</th>
             <th>CL (Casual Leave)</th>
+            <th>Total Leaves</th>
           </tr>
         </thead>
         <tbody>
@@ -54,6 +56,17 @@
             </td>
             <td data-label="ID">{{ emp.id }}</td>
             <td data-label="Name">{{ emp.name }}</td>
+            <td data-label="Carry Forward">
+              <input 
+                type="number" 
+                class="leave-input" 
+                min="0" 
+                max="31"
+                step="0.01"
+                [(ngModel)]="emp.carry_forward"
+                [disabled]="!emp.selected"
+              >
+            </td>
             <td data-label="PL">
               <input 
                 type="number" 
@@ -76,9 +89,12 @@
                 [disabled]="!emp.selected"
               >
             </td>
+            <td data-label="Total Leaves" class="total-leaves">
+              {{ getTotalLeaves(emp) }}
+            </td>
           </tr>
           <tr *ngIf="employees().length === 0" class="no-records">
-            <td colspan="5">No employees found.</td>
+            <td colspan="7">No employees found.</td>
           </tr>
         </tbody>
       </table>

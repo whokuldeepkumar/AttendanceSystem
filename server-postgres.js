@@ -207,7 +207,13 @@ app.post('/api/attendance', async (req, res) => {
         date: result.rows[0].date,
         inTime: result.rows[0].in_time,
         outTime: result.rows[0].out_time,
-        duration: result.rows[0].duration
+        duration: result.rows[0].duration,
+        inLatitude: result.rows[0].in_latitude,
+        inLongitude: result.rows[0].in_longitude,
+        outLatitude: result.rows[0].out_latitude,
+        outLongitude: result.rows[0].out_longitude,
+        inImage: result.rows[0].in_image ? '***IMAGE_DATA***' : null,
+        outImage: result.rows[0].out_image ? '***IMAGE_DATA***' : null
       }
     });
   } catch (error) {
@@ -286,14 +292,14 @@ app.post('/api/leaves/assign', async (req, res) => {
 
       if (existing.rows.length > 0) {
         const result = await pool.query(
-          'UPDATE leaves SET pl = $1, cl = $2 WHERE user_id = $3 AND month = $4 RETURNING *',
-          [emp.pl, emp.cl, emp.userId, month]
+          'UPDATE leaves SET pl = $1, cl = $2, carry_forward = $3 WHERE user_id = $4 AND month = $5 RETURNING *',
+          [emp.pl, emp.cl, emp.carry_forward || 0, emp.userId, month]
         );
         results.push(result.rows[0]);
       } else {
         const result = await pool.query(
-          'INSERT INTO leaves (user_id, month, pl, cl) VALUES ($1, $2, $3, $4) RETURNING *',
-          [emp.userId, month, emp.pl, emp.cl]
+          'INSERT INTO leaves (user_id, month, pl, cl, carry_forward) VALUES ($1, $2, $3, $4, $5) RETURNING *',
+          [emp.userId, month, emp.pl, emp.cl, emp.carry_forward || 0]
         );
         results.push(result.rows[0]);
       }

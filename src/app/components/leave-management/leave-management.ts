@@ -12,9 +12,9 @@ import { AuthService, Employee } from '../../services/auth.service';
   styleUrls: ['./leave-management.css']
 })
 export class LeaveManagementComponent implements OnInit {
-  employees = signal<(Employee & { selected?: boolean; pl?: number; cl?: number })[]>([]);
+  employees = signal<(Employee & { selected?: boolean; pl?: number; cl?: number; carry_forward?: number })[]>([]);
   selectedMonth = signal(new Date().toISOString().slice(0, 7));
-  loading = signal(false);
+  loading = signal(true);
   savingLeaves = signal(false);
   message = signal('');
 
@@ -26,11 +26,26 @@ export class LeaveManagementComponent implements OnInit {
 
   async loadEmployees() {
     this.loading.set(true);
-    await new Promise(resolve => setTimeout(resolve, 500));
-    const emps = this.authService.getEmployees();
-    this.employees.set(emps.map(emp => ({ ...emp, selected: false, pl: 0, cl: 0 })));
-    await this.loadSavedLeaves();
-    this.loading.set(false);
+    try {
+      // Wait for auth service to load employees from API
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      
+      // Retry getting employees if empty
+      let emps = this.authService.getEmployees();
+      let retries = 0;
+      while (emps.length === 0 && retries < 5) {
+        await new Promise(resolve => setTimeout(resolve, 500));
+        emps = this.authService.getEmployees();
+        retries++;
+      }
+      
+      this.employees.set(emps.map(emp => ({ ...emp, selected: false, pl: 0, cl: 0, carry_forward: 0 })));
+      await this.loadSavedLeaves();
+    } catch (error) {
+      console.error('Error loading employees:', error);
+    } finally {
+      this.loading.set(false);
+    }
   }
 
   async loadSavedLeaves() {
@@ -42,7 +57,7 @@ export class LeaveManagementComponent implements OnInit {
       
       this.employees.update(emps => emps.map(emp => {
         const saved = monthLeaves.find((l: any) => l.user_id === emp.id);
-        return saved ? { ...emp, pl: saved.pl, cl: saved.cl } : emp;
+        return saved ? { ...emp, pl: saved.pl, cl: saved.cl, carry_forward: saved.carry_forward || 0 } : emp;
       }));
     } catch (error) {
       console.error('Error loading saved leaves:', error);
@@ -58,6 +73,14 @@ export class LeaveManagementComponent implements OnInit {
     emp.selected = !emp.selected;
   }
 
+  getTotalLeaves(emp: any): string {
+    const carryForward = parseFloat(String(emp.carry_forward || 0));
+    const pl = parseFloat(String(emp.pl || 0));
+    const cl = parseFloat(String(emp.cl || 0));
+    const total = carryForward + pl + cl;
+    return total.toFixed(2);
+  }
+
   assignLeaves() {
     const selected = this.employees().filter(e => e.selected);
     if (selected.length === 0) {
@@ -69,7 +92,12 @@ export class LeaveManagementComponent implements OnInit {
     this.loading.set(true);
 
     const payload = {
-      employees: selected.map(e => ({ userId: e.id, pl: parseFloat(String(e.pl || 0)), cl: parseFloat(String(e.cl || 0)) })),
+      employees: selected.map(e => ({ 
+        userId: e.id, 
+        pl: parseFloat(String(e.pl || 0)), 
+        cl: parseFloat(String(e.cl || 0)),
+        carry_forward: parseFloat(String(e.carry_forward || 0))
+      })),
       month: this.selectedMonth()
     };
 

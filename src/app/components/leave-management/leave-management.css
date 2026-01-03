@@ -148,6 +148,12 @@
   cursor: not-allowed;
 }
 
+.total-leaves {
+  font-weight: 600;
+  color: var(--primary-color);
+  text-align: center;
+}
+
 .action-footer {
   display: flex;
   justify-content: flex-end;

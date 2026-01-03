@@ -10,6 +10,7 @@ import { HolidayService } from '../../services/holiday.service';
 import { LeaveService } from '../../services/leave.service';
 import { NotificationService } from '../../services/notification.service';
 import { SettingsService } from '../../services/settings.service';
+import { LeaveBalanceService } from '../../services/leave-balance.service';
 import { ModalComponent } from '../modal/modal';
 import { AttendanceStatsComponent } from '../stats/stats';
 
@@ -198,7 +199,8 @@ export class HomeComponent {
     private holidayService: HolidayService,
     private leaveService: LeaveService,
     private notificationService: NotificationService,
-    public settingsService: SettingsService
+    public settingsService: SettingsService,
+    public leaveBalanceService: LeaveBalanceService
   ) {
     this.currentUser = this.authService.currentUser;
     if (!this.authService.isAuthenticated()) {
@@ -214,6 +216,14 @@ export class HomeComponent {
       this.checkTodayStatus();
       this.setupInstallPrompt();
       this.checkInstallPrompt();
+      
+      // Load leave balance for current month
+      const currentMonth = new Date().toISOString().slice(0, 7);
+      const userId = this.currentUser()?.id;
+      if (userId && typeof userId === 'number') {
+        const attendanceRecords = this.currentMonthRecords();
+        await this.leaveBalanceService.loadLeaveBalance(userId, currentMonth, attendanceRecords);
+      }
       
       // Request notification permission on load
       setTimeout(() => {
@@ -413,16 +423,17 @@ export class HomeComponent {
       
       if (todayRecord?.inTime) {
         this.toastService.warning('Already clocked in today');
+        this.isLoading.set(false);
       } else {
         // Create custom time from inputs
         const customTime = this.createCustomTime(this.clockInHour(), this.clockInMin(), this.clockInPeriod());
-        console.log('confirmClockIn: Calling attendanceService.clockIn() with time:', customTime);
+        // Clock in with the custom time
         await this.attendanceService.clockIn(customTime);
         await this.attendanceService.loadRecords();
-        console.log('confirmClockIn: clockIn() completed');
-        this.toastService.success('Clocked in successfully!');
+        this.leaveBalanceService.refreshLeaveBalance(this.currentMonthRecords());
+        this.toastService.success('Clocked in successfully! ✓');
+        this.showClockInModal.set(false);
       }
-      this.showClockInModal.set(false);
     } catch (error) {
       this.toastService.error('Failed to clock in. Please try again.');
       console.error('Clock in error:', error);
@@ -458,18 +469,20 @@ export class HomeComponent {
       
       if (!todayRecord?.inTime) {
         this.toastService.warning('Please clock in first');
+        this.isLoading.set(false);
       } else if (todayRecord?.outTime) {
         this.toastService.warning('Already clocked out today');
+        this.isLoading.set(false);
       } else {
         // Create custom time from inputs
         const customTime = this.createCustomTime(this.clockOutHour(), this.clockOutMin(), this.clockOutPeriod());
-        console.log('confirmClockOut: Calling attendanceService.clockOut() with time:', customTime);
+        // Clock out with the custom time
         await this.attendanceService.clockOut(customTime);
         await this.attendanceService.loadRecords();
-        console.log('confirmClockOut: clockOut() completed');
-        this.toastService.success('Clocked out successfully!');
+        this.leaveBalanceService.refreshLeaveBalance(this.currentMonthRecords());
+        this.toastService.success('Clocked out successfully! ✓');
+        this.showClockOutModal.set(false);
       }
-      this.showClockOutModal.set(false);
     } catch (error) {
       this.toastService.error('Failed to clock out. Please try again.');
       console.error('Clock out error:', error);
@@ -501,6 +514,8 @@ export class HomeComponent {
     if (dateIso) {
       await this.attendanceService.deleteRecord(dateIso);
       await this.attendanceService.loadRecords();
+      // Refresh leave balance after delete
+      this.leaveBalanceService.refreshLeaveBalance(this.currentMonthRecords());
       this.toastService.success('Record deleted successfully');
     }
     this.showDeleteModal.set(false);
@@ -538,6 +553,8 @@ export class HomeComponent {
         this.toastService.success(`Day marked as ${label}`);
       }
       await this.attendanceService.loadRecords();
+      // Refresh leave balance after marking
+      this.leaveBalanceService.refreshLeaveBalance(this.currentMonthRecords());
       this.checkTodayStatus();
     } catch (error) {
       this.toastService.error('Failed to mark day. Please try again.');

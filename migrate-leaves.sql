@@ -7,6 +7,7 @@ CREATE TABLE leaves (
   month VARCHAR(7) NOT NULL,
   pl DECIMAL(5,2) DEFAULT 0,
   cl DECIMAL(5,2) DEFAULT 0,
+  carry_forward DECIMAL(5,2) DEFAULT 0,
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   UNIQUE(user_id, month)
 );
