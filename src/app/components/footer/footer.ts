@@ -1,5 +1,6 @@
 import { Component } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { SettingsService } from '../../services/settings.service';
 
 @Component({
   selector: 'app-footer',
@@ -9,7 +10,7 @@ import { CommonModule } from '@angular/common';
     <footer class="app-footer">
       <div class="footer-content">
         <div class="footer-section">
-          <h4>About Time Track</h4>
+          <h4>About {{ settingsService.companyName() }}</h4>
           <p>A modern attendance management system designed to streamline employee time tracking with real-time 
             clock-in/out functionality.</p>
         </div>
@@ -20,7 +21,7 @@ import { CommonModule } from '@angular/common';
       </div>
 
       <div class="footer-bottom">
-        <p>&copy; 2025 Time Track by Knotens. All rights reserved.</p>
+        <p>&copy; 2025 {{ settingsService.companyName() }} by Knotens. All rights reserved.</p>
         <p>Developed by Knotens | Version 1.0.0</p>
       </div>
     </footer>
@@ -154,5 +155,6 @@ import { CommonModule } from '@angular/common';
   `]
 })
 export class FooterComponent {
+  constructor(public settingsService: SettingsService) {}
 }
 

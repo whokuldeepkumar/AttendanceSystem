@@ -1,6 +1,10 @@
 <div class="login-container">
   <div class="glass-card login-card">
-    <h2 class="mb-4">Welcome Back</h2>
+    <div *ngIf="settingsService.appLogo()" class="logo-container">
+      <img [src]="settingsService.appLogo()" alt="Company Logo" class="company-logo">
+    </div>
+    <h2 class="mb-4">{{ settingsService.companyName() }}</h2>
+    <p class="subtitle">Welcome Back</p>
 
     <div class="form-group">
       <label for="mobile">Mobile Number</label>

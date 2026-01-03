@@ -4,6 +4,7 @@ import { Router } from '@angular/router';
 import { ThemeService } from '../../services/theme.service';
 import { ToastService } from '../../services/toast.service';
 import { AuthService } from '../../services/auth.service';
+import { SettingsService } from '../../services/settings.service';
 
 import { ModalComponent } from '../modal/modal';
 
@@ -15,8 +16,8 @@ import { ModalComponent } from '../modal/modal';
     <header class="app-header">
       <div class="header-content">
         <div class="header-brand" (click)="goToHome()">
-          <img src="/TimeTrack.png" alt="Time Track" class="brand-logo" />
-          <h1 class="brand-name">Time Track</h1>
+          <img [src]="settingsService.appLogo() || '/TimeTrack.png'" alt="Logo" class="brand-logo" />
+          <h1 class="brand-name">{{ settingsService.companyName() }}</h1>
         </div>
         <div class="user-info desktop-user-info" *ngIf="currentUser()">
           <div class="user-details">
@@ -39,10 +40,10 @@ import { ModalComponent } from '../modal/modal';
       </div>
     </header>
 
-    <app-modal
+      <app-modal
       [isOpen]="showLogoutModal"
       title="Confirm Logout"
-      message="Are you sure you want to logout from Time Track?"
+      [message]="'Are you sure you want to logout from ' + settingsService.companyName() + '?'"
       confirmText="Logout"
       cancelText="Cancel"
       (confirmed)="logout()"
@@ -285,7 +286,8 @@ export class HeaderComponent {
     private themeService: ThemeService,
     private toastService: ToastService,
     private authService: AuthService,
-    private router: Router
+    private router: Router,
+    public settingsService: SettingsService
   ) {}
 
   currentUser() {

@@ -12,11 +12,13 @@ async function initializeDatabase() {
     console.log('Initializing database...');
     const sqlPath = path.join(__dirname, 'init-database.sql');
     const sql = fs.readFileSync(sqlPath, 'utf8');
-    await pool.query(sql);
+    const statements = sql.split(';').filter(s => s.trim());
+    for (const statement of statements) {
+      await pool.query(statement);
+    }
     console.log('Database initialized successfully');
   } catch (error) {
-    console.error('Error initializing database:', error);
-    throw error;
+    console.error('Error initializing database:', error.message);
   }
 }
 

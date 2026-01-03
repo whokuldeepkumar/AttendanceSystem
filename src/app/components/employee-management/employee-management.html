@@ -1,4 +1,13 @@
 <div class="container employee-container">
+  <!-- Loader -->
+  <div *ngIf="loading()" class="fullscreen-loader">
+    <div class="loader-content">
+      <div class="spinner-large"></div>
+      <p>Loading employees...</p>
+    </div>
+  </div>
+
+  <div *ngIf="!loading()">
   
   <!-- Header -->
   <div class="glass-card header-card mb-4">
@@ -107,3 +116,4 @@
   (confirmed)="confirmDelete()"
   (cancelled)="showDeleteModal.set(false)"
 ></app-modal>
+</div>

@@ -207,7 +207,13 @@ app.post('/api/attendance', async (req, res) => {
         date: result.rows[0].date,
         inTime: result.rows[0].in_time,
         outTime: result.rows[0].out_time,
-        duration: result.rows[0].duration
+        duration: result.rows[0].duration,
+        inLatitude: result.rows[0].in_latitude,
+        inLongitude: result.rows[0].in_longitude,
+        outLatitude: result.rows[0].out_latitude,
+        outLongitude: result.rows[0].out_longitude,
+        inImage: result.rows[0].in_image ? '***IMAGE_DATA***' : null,
+        outImage: result.rows[0].out_image ? '***IMAGE_DATA***' : null
       }
     });
   } catch (error) {
@@ -242,58 +248,71 @@ app.delete('/api/attendance/:userId/:date', async (req, res) => {
 
 // ==================== LEAVES ====================
 
-// GET /api/leave/:userId - Get leave for specific user
-app.get('/api/leave/:userId', async (req, res) => {
+// GET /api/leaves - Get all leaves
+app.get('/api/leaves', async (req, res) => {
   try {
-    const { userId } = req.params;
+    const result = await pool.query('SELECT * FROM leaves ORDER BY month DESC');
+    res.json(result.rows);
+  } catch (error) {
+    console.error('Error fetching leaves:', error);
+    res.status(500).json({ success: false, message: 'Error fetching leaves' });
+  }
+});
+
+// GET /api/leaves/:userId/:month - Get leave for specific user and month
+app.get('/api/leaves/:userId/:month', async (req, res) => {
+  try {
+    const { userId, month } = req.params;
     const result = await pool.query(
-      'SELECT * FROM leaves WHERE user_id = $1 ORDER BY created_at DESC',
-      [userId]
+      'SELECT * FROM leaves WHERE user_id = $1 AND month = $2',
+      [userId, month]
     );
-    res.json(result.rows.map(row => ({
-      id: row.id,
-      userId: row.user_id,
-      startDate: row.start_date,
-      endDate: row.end_date,
-      reason: row.reason,
-      status: row.status,
-      createdAt: row.created_at
-    })));
+    res.json(result.rows[0] || null);
   } catch (error) {
     console.error('Error fetching leave:', error);
     res.status(500).json({ success: false, message: 'Error fetching leave' });
   }
 });
 
-// POST /api/leave - Add leave request
-app.post('/api/leave', async (req, res) => {
+// POST /api/leaves/assign - Assign leaves to employees
+app.post('/api/leaves/assign', async (req, res) => {
   try {
-    const { userId, startDate, endDate, reason, status = 'pending' } = req.body;
+    const { employees, month } = req.body;
 
-    if (!userId || !startDate || !endDate) {
-      return res.status(400).json({ success: false, message: 'userId, startDate, and endDate are required' });
+    if (!employees || !month) {
+      return res.status(400).json({ success: false, message: 'employees and month are required' });
     }
 
-    const result = await pool.query(
-      'INSERT INTO leaves (user_id, start_date, end_date, reason, status) VALUES ($1, $2, $3, $4, $5) RETURNING *',
-      [userId, startDate, endDate, reason, status]
-    );
+    const results = [];
+    for (const emp of employees) {
+      const existing = await pool.query(
+        'SELECT id FROM leaves WHERE user_id = $1 AND month = $2',
+        [emp.userId, month]
+      );
 
-    res.status(201).json({
-      success: true,
-      message: 'Leave request created',
-      leaveRequest: {
-        id: result.rows[0].id,
-        userId: result.rows[0].user_id,
-        startDate: result.rows[0].start_date,
-        endDate: result.rows[0].end_date,
-        reason: result.rows[0].reason,
-        status: result.rows[0].status
+      if (existing.rows.length > 0) {
+        const result = await pool.query(
+          'UPDATE leaves SET pl = $1, cl = $2, carry_forward = $3 WHERE user_id = $4 AND month = $5 RETURNING *',
+          [emp.pl, emp.cl, emp.carry_forward || 0, emp.userId, month]
+        );
+        results.push(result.rows[0]);
+      } else {
+        const result = await pool.query(
+          'INSERT INTO leaves (user_id, month, pl, cl, carry_forward) VALUES ($1, $2, $3, $4, $5) RETURNING *',
+          [emp.userId, month, emp.pl, emp.cl, emp.carry_forward || 0]
+        );
+        results.push(result.rows[0]);
       }
+    }
+
+    res.json({
+      success: true,
+      message: 'Leaves assigned successfully',
+      results
     });
   } catch (error) {
-    console.error('Error creating leave request:', error);
-    res.status(500).json({ success: false, message: 'Error creating leave request' });
+    console.error('Error assigning leaves:', error);
+    res.status(500).json({ success: false, message: 'Error assigning leaves' });
   }
 });
 
@@ -359,6 +378,62 @@ app.delete('/api/holidays/:date', async (req, res) => {
   } catch (error) {
     console.error('Error deleting holiday:', error);
     res.status(500).json({ success: false, message: 'Error deleting holiday' });
+  }
+});
+
+// ==================== SETTINGS ====================
+
+// GET /api/settings - Get all settings
+app.get('/api/settings', async (req, res) => {
+  try {
+    const result = await pool.query('SELECT * FROM settings');
+    const settings = {};
+    result.rows.forEach(row => {
+      settings[row.key] = row.value;
+    });
+    res.json(settings);
+  } catch (error) {
+    console.error('Error fetching settings:', error);
+    res.status(500).json({ success: false, message: 'Error fetching settings' });
+  }
+});
+
+// PUT /api/settings - Update settings
+app.put('/api/settings', async (req, res) => {
+  try {
+    const { company_name, admin_pin, app_logo } = req.body;
+
+    const updates = [];
+    if (company_name !== undefined) {
+      await pool.query(
+        'INSERT INTO settings (key, value) VALUES ($1, $2) ON CONFLICT (key) DO UPDATE SET value = $2, updated_at = CURRENT_TIMESTAMP',
+        ['company_name', company_name]
+      );
+      updates.push('company_name');
+    }
+    if (admin_pin !== undefined) {
+      await pool.query(
+        'INSERT INTO settings (key, value) VALUES ($1, $2) ON CONFLICT (key) DO UPDATE SET value = $2, updated_at = CURRENT_TIMESTAMP',
+        ['admin_pin', admin_pin]
+      );
+      updates.push('admin_pin');
+    }
+    if (app_logo !== undefined) {
+      await pool.query(
+        'INSERT INTO settings (key, value) VALUES ($1, $2) ON CONFLICT (key) DO UPDATE SET value = $2, updated_at = CURRENT_TIMESTAMP',
+        ['app_logo', app_logo]
+      );
+      updates.push('app_logo');
+    }
+
+    res.json({
+      success: true,
+      message: 'Settings updated successfully',
+      updated: updates
+    });
+  } catch (error) {
+    console.error('Error updating settings:', error);
+    res.status(500).json({ success: false, message: 'Error updating settings' });
   }
 });
 

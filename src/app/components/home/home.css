@@ -44,6 +44,66 @@
   }
 }
 
+/* Leave Balance Card */
+.leave-balance-card {
+  margin-bottom: 24px;
+  background: linear-gradient(135deg, rgba(139, 92, 246, 0.1) 0%, rgba(236, 72, 153, 0.1) 100%);
+  border: 2px solid rgba(139, 92, 246, 0.3);
+}
+
+.leave-balance-card .card-title {
+  margin: 0 0 16px 0;
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--text-color);
+}
+
+.leave-stats {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+}
+
+.leave-stat {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 12px;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.leave-stat.total {
+  background: linear-gradient(135deg, rgba(139, 92, 246, 0.2) 0%, rgba(236, 72, 153, 0.2) 100%);
+  border-color: rgba(139, 92, 246, 0.5);
+}
+
+.leave-stat.taken {
+  background: linear-gradient(135deg, rgba(239, 68, 68, 0.2) 0%, rgba(220, 38, 38, 0.2) 100%);
+  border-color: rgba(239, 68, 68, 0.5);
+}
+
+.leave-stat.remaining {
+  background: linear-gradient(135deg, rgba(34, 197, 94, 0.2) 0%, rgba(16, 185, 129, 0.2) 100%);
+  border-color: rgba(34, 197, 94, 0.5);
+}
+
+.stat-label {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 6px;
+}
+
+.stat-value {
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--text-color);
+}
+
 /* Header Section */
 .header-card {
   margin-bottom: 24px;
@@ -364,6 +424,10 @@
     flex-direction: column;
   }
 
+  .leave-stats {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
   .btn-large {
     width: 100%;
     max-width: none;
@@ -440,6 +504,10 @@
     padding: 14px 20px !important;
     font-size: 16px !important;
     min-width: auto;
+  }
+
+  .leave-stats {
+    grid-template-columns: 1fr;
   }
 
   .user-name {

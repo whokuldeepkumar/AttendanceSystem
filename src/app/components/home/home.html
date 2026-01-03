@@ -11,6 +11,37 @@
   <!-- Attendance Statistics -->
   <app-attendance-stats [records]="currentMonthRecords()"></app-attendance-stats>
 
+  <!-- Leave Balance Card -->
+  <div class="glass-card leave-balance-card">
+    <h3 class="card-title">📅 Leave Balance ({{ currentMonthName() }})</h3>
+    <div class="leave-stats">
+      <div class="leave-stat">
+        <span class="stat-label">Carry Forward</span>
+        <span class="stat-value">{{ leaveBalanceService.getLeaveBalanceSignal()().carry_forward.toFixed(2) }}</span>
+      </div>
+      <div class="leave-stat">
+        <span class="stat-label">PL</span>
+        <span class="stat-value">{{ leaveBalanceService.getLeaveBalanceSignal()().pl.toFixed(2) }}</span>
+      </div>
+      <div class="leave-stat">
+        <span class="stat-label">CL</span>
+        <span class="stat-value">{{ leaveBalanceService.getLeaveBalanceSignal()().cl.toFixed(2) }}</span>
+      </div>
+      <div class="leave-stat total">
+        <span class="stat-label">Total</span>
+        <span class="stat-value">{{ leaveBalanceService.getLeaveBalanceSignal()().total.toFixed(2) }}</span>
+      </div>
+      <div class="leave-stat taken">
+        <span class="stat-label">Leaves Taken</span>
+        <span class="stat-value">{{ leaveBalanceService.getLeaveBalanceSignal()().taken.toFixed(2) }}</span>
+      </div>
+      <div class="leave-stat remaining">
+        <span class="stat-label">Remaining</span>
+        <span class="stat-value">{{ leaveBalanceService.getLeaveBalanceSignal()().remaining.toFixed(2) }}</span>
+      </div>
+    </div>
+  </div>
+
   <!-- Holiday/Leave Notice -->
   <div *ngIf="todayHolidayName() || todayLeaveStatus()" class="notice-card">
     <span class="notice-icon">ℹ️</span>

@@ -23,12 +23,28 @@ CREATE TABLE IF NOT EXISTS attendance (
 CREATE TABLE IF NOT EXISTS leaves (
   id SERIAL PRIMARY KEY,
   user_id INTEGER REFERENCES employees(id) ON DELETE CASCADE,
-  start_date DATE NOT NULL,
-  end_date DATE NOT NULL,
-  reason TEXT,
-  status VARCHAR(20) DEFAULT 'pending',
-  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+  month VARCHAR(7) NOT NULL,
+  pl DECIMAL(5,2) DEFAULT 0,
+  cl DECIMAL(5,2) DEFAULT 0,
+  carry_forward DECIMAL(5,2) DEFAULT 0,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  UNIQUE(user_id, month)
 );
+
+-- Create settings table
+CREATE TABLE IF NOT EXISTS settings (
+  id SERIAL PRIMARY KEY,
+  key VARCHAR(100) UNIQUE NOT NULL,
+  value TEXT,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Insert default settings
+INSERT INTO settings (key, value) VALUES 
+  ('company_name', 'Time Track'),
+  ('admin_pin', '0590'),
+  ('app_logo', '')
+ON CONFLICT (key) DO NOTHING;
 
 -- Create holidays table
 CREATE TABLE IF NOT EXISTS holidays (
