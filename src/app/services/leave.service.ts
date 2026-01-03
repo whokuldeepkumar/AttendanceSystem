@@ -1,7 +1,6 @@
 import { Injectable, signal } from '@angular/core';
 import { StorageService } from './storage.service';
 import { AuthService } from './auth.service';
-import { environment } from '../../environments/environment';
 
 export interface LeaveRequest {
   id: string;
@@ -18,7 +17,6 @@ export interface LeaveRequest {
 })
 export class LeaveService {
   private readonly LEAVES_KEY = 'leave_requests';
-  private readonly API_URL = environment.apiUrl;
   leaveRequests = signal<LeaveRequest[]>([]);
 
   constructor(private storageService: StorageService, private authService: AuthService) {
@@ -33,18 +31,13 @@ export class LeaveService {
         return;
       }
 
-      const response = await fetch(`${this.API_URL}/leave/${user.id}`);
-      if (response.ok) {
-        const data = await response.json();
-        this.leaveRequests.set(data);
-        console.log('Leave requests loaded from API:', data);
-      }
-    } catch (error) {
-      console.error('Error loading leave from API:', error);
-      // Fallback to localStorage
+      // Load from localStorage (leave requests are not synced to API)
       const data = this.storageService.getItem<LeaveRequest[]>(this.LEAVES_KEY) || [];
       this.leaveRequests.set(data);
-      console.log('Leave requests loaded from localStorage');
+      console.log('Leave requests loaded from localStorage:', data);
+    } catch (error) {
+      console.error('Error loading leave requests:', error);
+      this.leaveRequests.set([]);
     }
   }
 
@@ -117,21 +110,11 @@ export class LeaveService {
       l.id === leaveId ? { ...l, status } : l
     );
     
-    // Save to localStorage first
+    // Save to localStorage
     this.leaveRequests.set(updated);
     this.storageService.setItem(this.LEAVES_KEY, updated);
-
-    // Then sync to API
-    try {
-      await fetch(`${this.API_URL}/leave/${leaveId}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ status })
-      });
-      console.log('Leave status updated in API');
-    } catch (error) {
-      console.error('Error updating leave in API:', error);
-    }
+    console.log('Leave status updated in localStorage');
+    // Note: Leave requests are stored in localStorage. API sync not available in this version.
   }
 
   getUserLeaves(): LeaveRequest[] {
