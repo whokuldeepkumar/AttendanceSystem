@@ -80,21 +80,10 @@ export class LeaveService {
   private async saveLeave(leaveRequest: LeaveRequest) {
     const updated = [...this.leaveRequests(), leaveRequest];
     
-    // Save to localStorage first
+    // Save to localStorage
     this.leaveRequests.set(updated);
     this.storageService.setItem(this.LEAVES_KEY, updated);
-
-    // Then sync to API
-    try {
-      await fetch(`${this.API_URL}/leave`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(leaveRequest)
-      });
-      console.log('Leave request synced to API');
-    } catch (error) {
-      console.error('Error syncing leave to API:', error);
-    }
+    console.log('Leave request saved to localStorage');
   }
 
   approveLeave(leaveId: string) {
