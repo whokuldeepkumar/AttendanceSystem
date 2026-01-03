@@ -2,6 +2,7 @@ import { Component, signal, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
+import { environment } from '../../../environments/environment';
 import { AuthService, Employee } from '../../services/auth.service';
 
 @Component({
@@ -51,7 +52,7 @@ export class LeaveManagementComponent implements OnInit {
   async loadSavedLeaves() {
     const month = this.selectedMonth();
     try {
-      const response = await fetch(`http://localhost:3000/api/leaves`);
+      const response = await fetch(`${environment.apiUrl}/leaves`);
       const allLeaves = await response.json();
       const monthLeaves = allLeaves.filter((l: any) => l.month === month);
       
@@ -101,7 +102,7 @@ export class LeaveManagementComponent implements OnInit {
       month: this.selectedMonth()
     };
 
-    fetch('http://localhost:3000/api/leaves/assign', {
+    fetch(`${environment.apiUrl}/leaves/assign`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(payload)

@@ -1,4 +1,5 @@
 import { Injectable, signal } from '@angular/core';
+import { environment } from '../../environments/environment';
 
 export interface LeaveBalance {
   carry_forward: number;
@@ -25,7 +26,7 @@ export class LeaveBalanceService {
 
   private async calculateAndUpdateBalance(attendanceRecords: any[], userId: number, month: string) {
     try {
-      const response = await fetch(`http://localhost:3000/api/leaves`);
+      const response = await fetch(`${environment.apiUrl}/leaves`);
       const allLeaves = await response.json();
       const userLeave = allLeaves.find((l: any) => l.user_id === userId && l.month === month);
       

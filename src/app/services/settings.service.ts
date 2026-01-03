@@ -1,4 +1,5 @@
 import { Injectable, signal } from '@angular/core';
+import { environment } from '../../environments/environment';
 
 export interface AppSettings {
   company_name: string;
@@ -27,7 +28,7 @@ export class SettingsService {
 
   async loadSettings() {
     try {
-      const response = await fetch('http://localhost:3000/api/settings');
+      const response = await fetch(`${environment.apiUrl}/settings`);
       const data = await response.json();
       this.settings.set(data);
       this.companyName.set(data.company_name || 'Time Track');
@@ -41,7 +42,7 @@ export class SettingsService {
 
   async updateSettings(settings: Partial<AppSettings>) {
     try {
-      const response = await fetch('http://localhost:3000/api/settings', {
+      const response = await fetch(`${environment.apiUrl}/settings`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(settings)
