@@ -72,27 +72,30 @@ class AttendanceScheduler {
 
       // Step 2: Sync attendance for each employee using their Genus employee code
       for (const employee of employees) {
-        try {
-          // Verify employee code exists
-          if (!employee.employee_code) {
-            schedulerLogger.warn(`Skipping ${employee.name}: No employee_code configured in database`);
-            continue;
-          }
+  schedulerLogger.info(`👉 Processing employee: ${employee.name} (ID: ${employee.id}, Code: ${employee.employee_code})`);
 
-          await this.syncEmployeeAttendance(
-            employee.id,
-            employee.name,
-            employee.employee_code,
-            bearerToken,
-            mmyy,
-            todayString
-          );
-        } catch (error) {
-          schedulerLogger.error(`Error syncing attendance for employee ${employee.name}: ${error.message}`);
-          // Continue with next employee even if one fails
-          continue;
-        }
-      }
+  try {
+    // Check employee code
+    if (!employee.employee_code) {
+      schedulerLogger.warn(`⛔ Skipping ${employee.name}: No employee_code`);
+      continue;
+    }
+
+    await this.syncEmployeeAttendance(
+      employee.id,
+      employee.name,
+      employee.employee_code,
+      bearerToken,
+      mmyy,
+      todayString
+    );
+
+    schedulerLogger.info(`✅ Finished employee: ${employee.name}`);
+
+  } catch (error) {
+    schedulerLogger.error(`❌ Error syncing ${employee.name}: ${error.message}`);
+  }
+}
 
       schedulerLogger.info('Attendance sync process completed');
     } catch (error) {
@@ -116,11 +119,16 @@ class AttendanceScheduler {
       
       let calendarData;
       try {
+        schedulerLogger.info(`📡 Calling API for ${employeeName} (${employeeCode})`);
+
         calendarData = await ExternalAPIService.getEmployeeCalendar(
           employeeCode,
           bearerToken,
           mmyy
         );
+
+        schedulerLogger.info(`📥 API response received for ${employeeName}`);
+
       } catch (apiError) {
         // Skip employee if API returns 404 or other fetch errors
         if (apiError.response?.status === 404) {
@@ -130,14 +138,19 @@ class AttendanceScheduler {
         } else {
           schedulerLogger.warn(`Skipping ${employeeName}: Failed to fetch calendar data - ${apiError.message}`);
         }
-        return; // Skip this employee and continue with next
+        schedulerLogger.error(`🚨 API FAILED for ${employeeName}: ${apiError.message}`);
+        return;
       }
 
       // Step 2: Extract today's attendance from the calendar data
       const todayAttendance = ExternalAPIService.extractTodayAttendance(calendarData, todayString);
 
+      schedulerLogger.info(`📊 Extracted attendance for ${employeeName}: ${JSON.stringify(todayAttendance)}`);
+
       if (todayAttendance) {
         // Step 3: Save to database
+        schedulerLogger.info(`💾 Saving attendance for ${employeeName}`);
+
         await ExternalAPIService.saveAttendance(
           employeeId,
           employeeCode,
