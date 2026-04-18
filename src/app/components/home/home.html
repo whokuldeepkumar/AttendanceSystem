@@ -12,7 +12,7 @@
   <app-attendance-stats [records]="currentMonthRecords()"></app-attendance-stats>
 
   <!-- Leave Balance Card -->
-  <div class="glass-card leave-balance-card">
+  <!-- <div class="glass-card leave-balance-card">
     <h3 class="card-title">📅 Leave Balance ({{ currentMonthName() }})</h3>
     <div class="leave-stats">
       <div class="leave-stat">
@@ -40,7 +40,7 @@
         <span class="stat-value">{{ leaveBalanceService.getLeaveBalanceSignal()().remaining.toFixed(2) }}</span>
       </div>
     </div>
-  </div>
+  </div> -->
 
   <!-- Holiday/Leave Notice -->
   <div *ngIf="todayHolidayName() || todayLeaveStatus()" class="notice-card">
@@ -142,8 +142,21 @@
             <div class="time-in">In: {{ day.record.inTime | date:'shortTime' }}</div>
             <div class="time-out" *ngIf="day.record.outTime">Out: {{ day.record.outTime | date:'shortTime' }}</div>
             <div class="time-total" *ngIf="day.record.duration && day.record.duration.includes('h')">
-              {{ isToday(day.dateStr) && !day.record.outTime ? elapsedTime() : day.record.duration }}
-            </div>
+  {{
+    isToday(day.dateStr) && !day.record.outTime
+      ? elapsedTime()
+      : day.record.duration
+  }}
+  <span
+  class="time-diff"
+  [ngClass]="{
+    'positive': getTimeDifference(day.record.duration).includes('+'),
+    'negative': getTimeDifference(day.record.duration).includes('-')
+  }"
+>
+  {{ getTimeDifference(day.record.duration) }}
+</span>
+</div>
           </div>
         </div>
       </div>

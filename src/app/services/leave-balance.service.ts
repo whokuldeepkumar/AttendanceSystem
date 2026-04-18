@@ -39,8 +39,8 @@ export class LeaveBalanceService {
           const inTime = new Date(r.inTime).getTime();
           const outTime = new Date(r.outTime).getTime();
           const hours = (outTime - inTime) / (1000 * 60 * 60);
-          if (hours < 4.5) leavesTaken += 1;
-          else if (hours >= 4.5 && hours < 8.5) leavesTaken += 0.5;
+          if (hours <= 4.5 && hours > 1) leavesTaken += 0.5;
+          //else if (hours >= 4.5 && hours < 8.5) leavesTaken += 0.5;
         }
       });
       

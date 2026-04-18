@@ -2,6 +2,8 @@ const express = require('express');
 const cors = require('cors');
 require('dotenv').config();
 const { pool, initializeDatabase } = require('./db');
+const AttendanceScheduler = require('./attendance-scheduler');
+const { logger, schedulerLogger, readLogFile, getLogStats, logsDir } = require('./logger');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -437,9 +439,443 @@ app.put('/api/settings', async (req, res) => {
   }
 });
 
+// ==================== LOGGING ENDPOINTS ====================
+
+// GET /api/logs/status - Get log file status and statistics
+app.get('/api/logs/status', (req, res) => {
+  try {
+    const stats = getLogStats();
+    res.json({
+      success: true,
+      message: 'Log status retrieved',
+      logsDirectory: logsDir,
+      logFiles: stats
+    });
+  } catch (error) {
+    logger.error(`Error getting log status: ${error.message}`);
+    res.status(500).json({
+      success: false,
+      message: 'Error getting log status',
+      error: error.message
+    });
+  }
+});
+
+// GET /api/logs/scheduler - Get scheduler logs (last N lines)
+app.get('/api/logs/scheduler', (req, res) => {
+  try {
+    const lines = req.query.lines ? parseInt(req.query.lines) : 100;
+    const logContent = readLogFile('scheduler.log', lines);
+    
+    if (logContent.error) {
+      return res.status(404).json({
+        success: false,
+        message: logContent.error
+      });
+    }
+
+    res.json({
+      success: true,
+      file: 'scheduler.log',
+      lines: logContent.length,
+      data: logContent
+    });
+  } catch (error) {
+    logger.error(`Error reading scheduler logs: ${error.message}`);
+    res.status(500).json({
+      success: false,
+      message: 'Error reading logs',
+      error: error.message
+    });
+  }
+});
+
+// GET /api/logs/api - Get API logs (last N lines)
+app.get('/api/logs/api', (req, res) => {
+  try {
+    const lines = req.query.lines ? parseInt(req.query.lines) : 100;
+    const logContent = readLogFile('api.log', lines);
+    
+    if (logContent.error) {
+      return res.status(404).json({
+        success: false,
+        message: logContent.error
+      });
+    }
+
+    res.json({
+      success: true,
+      file: 'api.log',
+      lines: logContent.length,
+      data: logContent
+    });
+  } catch (error) {
+    logger.error(`Error reading API logs: ${error.message}`);
+    res.status(500).json({
+      success: false,
+      message: 'Error reading logs',
+      error: error.message
+    });
+  }
+});
+
+// GET /api/logs/error - Get error logs (last N lines)
+app.get('/api/logs/error', (req, res) => {
+  try {
+    const lines = req.query.lines ? parseInt(req.query.lines) : 100;
+    const logContent = readLogFile('error.log', lines);
+    
+    if (logContent.error) {
+      return res.status(404).json({
+        success: false,
+        message: logContent.error
+      });
+    }
+
+    res.json({
+      success: true,
+      file: 'error.log',
+      lines: logContent.length,
+      data: logContent
+    });
+  } catch (error) {
+    logger.error(`Error reading error logs: ${error.message}`);
+    res.status(500).json({
+      success: false,
+      message: 'Error reading logs',
+      error: error.message
+    });
+  }
+});
+
+// GET /api/logs/combined - Get combined logs (last N lines)
+app.get('/api/logs/combined', (req, res) => {
+  try {
+    const lines = req.query.lines ? parseInt(req.query.lines) : 100;
+    const logContent = readLogFile('combined.log', lines);
+    
+    if (logContent.error) {
+      return res.status(404).json({
+        success: false,
+        message: logContent.error
+      });
+    }
+
+    res.json({
+      success: true,
+      file: 'combined.log',
+      lines: logContent.length,
+      data: logContent
+    });
+  } catch (error) {
+    logger.error(`Error reading combined logs: ${error.message}`);
+    res.status(500).json({
+      success: false,
+      message: 'Error reading logs',
+      error: error.message
+    });
+  }
+});
+
+// GET /api/logs/:filename - Get any log file with custom number of lines
+app.get('/api/logs/:filename', (req, res) => {
+  try {
+    const filename = req.params.filename;
+    const lines = req.query.lines ? parseInt(req.query.lines) : 100;
+    
+    // Validate filename to prevent directory traversal attacks
+    if (filename.includes('..') || filename.includes('/') || filename.includes('\\')) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid filename'
+      });
+    }
+
+    const logContent = readLogFile(filename, lines);
+    
+    if (logContent.error) {
+      return res.status(404).json({
+        success: false,
+        message: logContent.error
+      });
+    }
+
+    res.json({
+      success: true,
+      file: filename,
+      lines: logContent.length,
+      data: logContent
+    });
+  } catch (error) {
+    logger.error(`Error reading log file: ${error.message}`);
+    res.status(500).json({
+      success: false,
+      message: 'Error reading log file',
+      error: error.message
+    });
+  }
+});
+
+// DELETE /api/logs/:filename - Clear a specific log file
+app.delete('/api/logs/:filename', (req, res) => {
+  try {
+    const filename = req.params.filename;
+    const fs = require('fs');
+    const path = require('path');
+
+    // Validate filename
+    if (filename.includes('..') || filename.includes('/') || filename.includes('\\')) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid filename'
+      });
+    }
+
+    const filePath = path.join(logsDir, filename);
+
+    if (!fs.existsSync(filePath)) {
+      return res.status(404).json({
+        success: false,
+        message: `Log file not found: ${filename}`
+      });
+    }
+
+    fs.writeFileSync(filePath, '');
+    logger.info(`Log file cleared: ${filename}`);
+
+    res.json({
+      success: true,
+      message: `Log file cleared: ${filename}`
+    });
+  } catch (error) {
+    logger.error(`Error clearing log file: ${error.message}`);
+    res.status(500).json({
+      success: false,
+      message: 'Error clearing log file',
+      error: error.message
+    });
+  }
+});
+
+// GET /api/logs/download/:filename - Download a log file
+app.get('/api/logs/download/:filename', (req, res) => {
+  try {
+    const filename = req.params.filename;
+    const fs = require('fs');
+    const path = require('path');
+
+    // Validate filename
+    if (filename.includes('..') || filename.includes('/') || filename.includes('\\')) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid filename'
+      });
+    }
+
+    const filePath = path.join(logsDir, filename);
+
+    if (!fs.existsSync(filePath)) {
+      return res.status(404).json({
+        success: false,
+        message: `Log file not found: ${filename}`
+      });
+    }
+
+    res.download(filePath, filename);
+    logger.debug(`Log file downloaded: ${filename}`);
+  } catch (error) {
+    logger.error(`Error downloading log file: ${error.message}`);
+    res.status(500).json({
+      success: false,
+      message: 'Error downloading log file',
+      error: error.message
+    });
+  }
+});
+
+// POST /api/external-attendance/sync - Save external attendance data manually or for specific date
+// Request body: { employeeId, employeeCode, attendanceDate, attendanceData }
+// Example: { employeeId: 1, employeeCode: "400049", attendanceDate: "2026-04-18", attendanceData: { status: "AA", firstPunchIn: "09:10", ... } }
+app.post('/api/external-attendance/sync', async (req, res) => {
+  try {
+    const { employeeId, employeeCode, attendanceDate, attendanceData } = req.body;
+
+    // Validate required fields
+    if (!employeeId || !employeeCode || !attendanceDate || !attendanceData) {
+      return res.status(400).json({
+        success: false,
+        message: 'Missing required fields: employeeId, employeeCode, attendanceDate, attendanceData'
+      });
+    }
+
+    // attendanceData should contain at least status field
+    if (!attendanceData.status) {
+      return res.status(400).json({
+        success: false,
+        message: 'attendanceData must contain status field'
+      });
+    }
+
+    // Save to database using ExternalAPIService
+    const ExternalAPIService = require('./external-api-service');
+    await ExternalAPIService.saveAttendance(
+      employeeId,
+      employeeCode,
+      attendanceDate,
+      attendanceData
+    );
+
+    res.json({
+      success: true,
+      message: 'Attendance data saved successfully',
+      data: {
+        employeeId,
+        employeeCode,
+        attendanceDate,
+        status: attendanceData.status,
+        syncedAt: new Date().toISOString()
+      }
+    });
+
+    logger.info(`External attendance synced manually for employee ${employeeCode} on ${attendanceDate}`);
+  } catch (error) {
+    logger.error(`Error syncing external attendance: ${error.message}`, { stack: error.stack });
+    res.status(500).json({
+      success: false,
+      message: 'Error syncing attendance data',
+      error: error.message
+    });
+  }
+});
+
+// GET /api/external-attendance/:employeeId - Get external attendance records for an employee
+app.get('/api/external-attendance/:employeeId', async (req, res) => {
+  try {
+    const { employeeId } = req.params;
+    const { limit = 30, offset = 0 } = req.query;
+
+    const query = `
+      SELECT 
+        id, 
+        employee_id,
+        employee_code,
+        attendance_date,
+        status,
+        data,
+        synced_at
+      FROM external_attendance
+      WHERE employee_id = $1
+      ORDER BY attendance_date DESC
+      LIMIT $2 OFFSET $3
+    `;
+
+    const result = await pool.query(query, [employeeId, limit, offset]);
+
+    // Count total records
+    const countResult = await pool.query(
+      'SELECT COUNT(*) as total FROM external_attendance WHERE employee_id = $1',
+      [employeeId]
+    );
+
+    res.json({
+      success: true,
+      data: result.rows,
+      pagination: {
+        total: parseInt(countResult.rows[0].total),
+        limit: parseInt(limit),
+        offset: parseInt(offset)
+      }
+    });
+  } catch (error) {
+    logger.error(`Error fetching external attendance: ${error.message}`);
+    res.status(500).json({
+      success: false,
+      message: 'Error fetching attendance records',
+      error: error.message
+    });
+  }
+});
+
+// GET /api/external-attendance - Get all external attendance records with filters
+app.get('/api/external-attendance', async (req, res) => {
+  try {
+    const { fromDate, toDate, employeeCode, status, limit = 50, offset = 0 } = req.query;
+
+    let query = 'SELECT * FROM external_attendance WHERE 1=1';
+    const params = [];
+    let paramCount = 1;
+
+    if (fromDate) {
+      query += ` AND attendance_date >= $${paramCount++}`;
+      params.push(fromDate);
+    }
+
+    if (toDate) {
+      query += ` AND attendance_date <= $${paramCount++}`;
+      params.push(toDate);
+    }
+
+    if (employeeCode) {
+      query += ` AND employee_code = $${paramCount++}`;
+      params.push(employeeCode);
+    }
+
+    if (status) {
+      query += ` AND status = $${paramCount++}`;
+      params.push(status);
+    }
+
+    query += ` ORDER BY attendance_date DESC LIMIT $${paramCount++} OFFSET $${paramCount++}`;
+    params.push(limit, offset);
+
+    const result = await pool.query(query, params);
+
+    res.json({
+      success: true,
+      data: result.rows,
+      count: result.rows.length,
+      pagination: {
+        limit: parseInt(limit),
+        offset: parseInt(offset)
+      }
+    });
+  } catch (error) {
+    logger.error(`Error fetching external attendance: ${error.message}`);
+    res.status(500).json({
+      success: false,
+      message: 'Error fetching attendance records',
+      error: error.message
+    });
+  }
+});
+
 // Start server
+let schedulerTask;
 app.listen(PORT, () => {
-  console.log(`Server running at http://localhost:${PORT}`);
-  console.log(`API available at http://localhost:${PORT}/api`);
-  console.log('Database: PostgreSQL (Neon)');
+  logger.info(`Server running at http://localhost:${PORT}`);
+  logger.info(`API available at http://localhost:${PORT}/api`);
+  logger.info('Database: PostgreSQL (Neon)');
+
+  // Start the attendance scheduler
+  logger.info('===== Starting Attendance Scheduler =====');
+  schedulerTask = AttendanceScheduler.startScheduler();
+  logger.info('Scheduler will run every 5 minutes');
+  logger.info('===== Logging System Initialized =====');
+});
+
+// Graceful shutdown
+process.on('SIGTERM', () => {
+  logger.info('SIGTERM received, shutting down gracefully...');
+  if (schedulerTask) {
+    AttendanceScheduler.stopScheduler(schedulerTask);
+  }
+  process.exit(0);
+});
+
+process.on('SIGINT', () => {
+  logger.info('SIGINT received, shutting down gracefully...');
+  if (schedulerTask) {
+    AttendanceScheduler.stopScheduler(schedulerTask);
+  }
+  process.exit(0);
 });

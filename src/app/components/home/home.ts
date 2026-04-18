@@ -314,9 +314,10 @@ export class HomeComponent {
     
     // Check if user is on leave for this date OR if hours are very low (< 4.5), treat as leave
     const dateStr = record.date.split('T')[0];
-    if (this.leaveService.isOnLeave(dateStr) || totalHours < 4.5) return 'Leave';
+    if (this.leaveService.isOnLeave(dateStr)) return 'Leave';
     
-    if (totalHours >= 4.5 && totalHours < 8.5) return 'Half Day';
+    if (totalHours <= 5) return 'Half Day';
+
     return 'Full Day';
   }
 
@@ -364,6 +365,33 @@ export class HomeComponent {
       return { isSufficient: false, displayText: `${durationStr} (${remainingText})` };
     }
   }
+
+  getTimeDifference(durationStr: string | null): string {
+  if (!durationStr) return '';
+
+  const match = durationStr.match(/(\d+)h\s*(\d+)m/);
+  if (!match) return '';
+
+  const hours = parseInt(match[1], 10);
+  const minutes = parseInt(match[2], 10);
+
+  const totalMinutes = hours * 60 + minutes;
+  const requiredMinutes = 9 * 60;
+
+  const diff = totalMinutes - requiredMinutes;
+
+  const abs = Math.abs(diff);
+  const h = Math.floor(abs / 60);
+  const m = abs % 60;
+
+  if (diff === 0) return '(0m)';
+
+  const formatted = h > 0 ? `${h}h ${m}m` : `${m}m`;
+
+  return diff > 0
+    ? `(+${formatted})`
+    : `(-${formatted})`;
+}
 
   checkTodayStatus() {
     const today = new Date().toISOString().split('T')[0];
