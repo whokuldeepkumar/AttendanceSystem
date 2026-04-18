@@ -46,9 +46,9 @@ class AttendanceScheduler {
       }
 
       // Get credentials from environment
-      const empCode = process.env.EXTERNAL_API_EMPCODE;
-      const empPassword = process.env.EXTERNAL_API_EMPPASSWORD;
-      const empCompany = process.env.EXTERNAL_API_COMPANY;
+      const empCode = "400049";//process.env.EXTERNAL_API_EMPCODE;
+      const empPassword = "Myname@@123";//process.env.EXTERNAL_API_EMPPASSWORD;
+      const empCompany = "GPIL";//process.env.EXTERNAL_API_COMPANY;
 
       if (!empCode || !empPassword || !empCompany) {
         schedulerLogger.error('External API credentials not configured in environment variables (EXTERNAL_API_EMPCODE, EXTERNAL_API_EMPPASSWORD, EXTERNAL_API_COMPANY required)');
