@@ -1,6 +1,13 @@
 const express = require('express');
 const cors = require('cors');
 require('dotenv').config();
+process.on('unhandledRejection', err => {
+  console.error('UNHANDLED PROMISE ERROR:', err);
+});
+
+process.on('uncaughtException', err => {
+  console.error('UNCAUGHT EXCEPTION:', err);
+});
 const { pool, initializeDatabase } = require('./db');
 const AttendanceScheduler = require('./attendance-scheduler');
 const { logger, schedulerLogger, readLogFile, getLogStats, logsDir } = require('./logger');
@@ -858,7 +865,12 @@ app.listen(PORT, () => {
 
   // Start the attendance scheduler
   logger.info('===== Starting Attendance Scheduler =====');
+  try {
   schedulerTask = AttendanceScheduler.startScheduler();
+  logger.info('Scheduler started successfully');
+} catch (err) {
+  logger.error('Scheduler failed to start:', err);
+}
   logger.info('Scheduler will run every 5 minutes');
   logger.info('===== Logging System Initialized =====');
 });
