@@ -54,3 +54,27 @@ CREATE TABLE IF NOT EXISTS holidays (
   description TEXT,
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
+
+-- Create api_tokens table for storing bearer tokens
+CREATE TABLE IF NOT EXISTS api_tokens (
+  id SERIAL PRIMARY KEY,
+  employee_id INTEGER REFERENCES employees(id) ON DELETE CASCADE,
+  employee_code VARCHAR(100) NOT NULL,
+  bearer_token TEXT NOT NULL,
+  token_expires_at TIMESTAMP,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  UNIQUE(employee_id)
+);
+
+-- Create external_attendance table for storing synced attendance data from external API
+CREATE TABLE IF NOT EXISTS external_attendance (
+  id SERIAL PRIMARY KEY,
+  employee_id INTEGER REFERENCES employees(id) ON DELETE CASCADE,
+  employee_code VARCHAR(100) NOT NULL,
+  attendance_date DATE NOT NULL,
+  status VARCHAR(50),
+  data JSONB,
+  synced_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  UNIQUE(employee_id, attendance_date)
+);

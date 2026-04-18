@@ -976,6 +976,18 @@
   margin-top: 4px;
 }
 
+.time-diff {
+  font-size: 11px;
+}
+
+.time-diff.positive {
+  color: #22c55e;
+}
+
+.time-diff.negative {
+  color: #ef4444;
+}
+
 @keyframes labelSlideIn {
   from {
     opacity: 0;

@@ -31,7 +31,9 @@ interface AttendanceStats {
         <div class="stat-card">
           <div class="stat-label">Present Days</div>
           <div class="stat-value present">
-            <div class="present-count">{{ stats().presentDays }}</div>
+            <div class="present-count">
+              {{ stats().presentDays }}/{{ stats().totalDays }}
+            </div>
             
             <div class="present-subtext" *ngIf="stats().satOffDays > 0 || stats().sunOffDays > 0">
               <span *ngIf="stats().satOffDays > 0">Sat: {{ stats().satOffDays }}</span>
@@ -48,7 +50,9 @@ interface AttendanceStats {
         
         <div class="stat-card">
           <div class="stat-label">Total Hours</div>
-          <div class="stat-value total-hours">{{ formatHours(stats().totalHours) }}</div>
+          <div class="stat-value total-hours">
+            {{ formatHours(stats().totalHours) }} / {{ formatHours(requiredHours()) }}
+          </div>
         </div>
         
         <div class="stat-card">
@@ -178,6 +182,8 @@ interface AttendanceStats {
       background: rgba(139, 92, 246, 0.1);
       padding: 8px;
       border-radius: 8px;
+      font-size: 18px; /* 👈 reduced from 28px */
+      line-height: 1.3;
     }
 
     .stat-value.percentage {
@@ -271,6 +277,7 @@ export class AttendanceStatsComponent {
     const todayDate = new Date();
     todayDate.setHours(0, 0, 0, 0);
 
+    
     // Filter records for current month up to today (exclude future dates)
     const monthRecords = records.filter((r: AttendanceRecord) => {
       const date = new Date(r.date);
@@ -280,17 +287,29 @@ export class AttendanceStatsComponent {
 
     // Calculate present days with half day as 0.5
     let presentDays = 0;
+    let AttendanceDays = 0;
     monthRecords.forEach((r: AttendanceRecord) => {
       if (r.duration === '1st Half Day' || r.duration === '2nd Half Day') {
         presentDays += 0.5;
+        AttendanceDays += 0.5;
       } else if (r.duration === 'Saturday Off' || r.duration === 'Sunday Off') {
         presentDays += 1; // Count Sat/Sun off as present
+        //AttendanceDays += 1;
       } else if (r.inTime && r.outTime) {
         const inTime = new Date(r.inTime).getTime();
         const outTime = new Date(r.outTime).getTime();
         const totalHours = (outTime - inTime) / (1000 * 60 * 60);
-        if (totalHours >= 8.5) presentDays += 1;
-        else if (totalHours >= 4.5) presentDays += 0.5;
+        //if (totalHours >= 8.5) presentDays += 1;
+        if (totalHours >= 6) 
+          {
+            presentDays += 1;
+            AttendanceDays += 1;  
+          }
+        else if (totalHours >= 4.5) 
+          {
+            presentDays += 0.5;
+            AttendanceDays += 0.5;
+          }
       }
     });
     
@@ -333,7 +352,7 @@ export class AttendanceStatsComponent {
         const outTime = new Date(r.outTime).getTime();
         const hours = (outTime - inTime) / (1000 * 60 * 60);
         // Only count hours if full day (>= 8.5 hours)
-        if (hours >= 8.5) {
+        if (hours >= 0) {
           totalHours += hours;
         }
       }
@@ -354,7 +373,7 @@ export class AttendanceStatsComponent {
         const outTime = new Date(r.outTime).getTime();
         const hours = (outTime - inTime) / (1000 * 60 * 60);
         if (hours < 4.5) leaveDays += 1;
-        else if (hours >= 4.5 && hours < 8.5) leaveDays += 0.5;
+        else if (hours >= 4.5 && hours < 5) leaveDays += 0.5;
       }
     });
 
@@ -368,6 +387,7 @@ export class AttendanceStatsComponent {
     return {
       totalDays,
       presentDays,
+      AttendanceDays,
       absentDays,
       totalHours,
       averageHours,
@@ -381,57 +401,35 @@ export class AttendanceStatsComponent {
     };
   });
 
+  requiredHours = computed(() => {
+  const stats = this.stats();
+  const requiredPerDay = 9;
+  return stats.AttendanceDays * requiredPerDay;
+});
+
   constructor(
     private leaveService: LeaveService,
     private holidayService: HolidayService
   ) {}
 
   timeRemainingText = computed(() => {
-    const records = this._records();
-    const currentDate = new Date();
-    const currentMonth = currentDate.getMonth();
-    const currentYear = currentDate.getFullYear();
-    const todayDate = new Date();
-    todayDate.setHours(0, 0, 0, 0);
-    
-    const monthRecords = records.filter((r: AttendanceRecord) => {
-      const date = new Date(r.date);
-      date.setHours(0, 0, 0, 0);
-      return date.getMonth() === currentMonth && date.getFullYear() === currentYear && date <= todayDate;
-    });
-    
-    let totalMinutes = 0;
-    let workDays = 0;
-    
-    monthRecords.forEach((r: AttendanceRecord) => {
-      if (r.inTime && r.outTime) {
-        const inTime = new Date(r.inTime).getTime();
-        const outTime = new Date(r.outTime).getTime();
-        const hours = (outTime - inTime) / (1000 * 60 * 60);
-        // Only count if full day (>= 8.5 hours)
-        if (hours >= 8.5) {
-          totalMinutes += hours * 60;
-          workDays++;
-        }
-      }
-    });
-    
-    if (workDays === 0) return '0h 0m';
-    
-    const requiredMinutes = workDays * 9 * 60; // 9 hours per day
-    const diff = totalMinutes - requiredMinutes;
-    const absDiff = Math.abs(diff);
-    const hours = Math.floor(absDiff / 60);
-    const minutes = Math.round(absDiff % 60);
-    
-    if (diff > 0) {
-      return `+${hours}h ${minutes}m`;
-    } else if (diff < 0) {
-      return `-${hours}h ${minutes}m`;
-    } else {
-      return '0h 0m';
-    }
-  });
+  const totalHours = this.stats().totalHours;
+  const required = this.requiredHours();
+
+  const diff = required - totalHours; // 👈 main change
+  const absDiff = Math.abs(diff);
+
+  const hours = Math.floor(absDiff);
+  const minutes = Math.round((absDiff - hours) * 60);
+
+  if (diff > 0) {
+    return `-${hours}h ${minutes}m`; // need to complete
+  } else if (diff < 0) {
+    return `+${hours}h ${minutes}m`; // extra time done
+  } else {
+    return '0h 0m';
+  }
+});
   
   timeRemainingClass = computed(() => {
     const text = this.timeRemainingText();
