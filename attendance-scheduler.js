@@ -2,178 +2,125 @@ const cron = require('node-cron');
 const ExternalAPIService = require('./external-api-service');
 const { schedulerLogger } = require('./logger');
 
-/**
- * AttendanceScheduler - Handles scheduled tasks for syncing external attendance data
- */
 class AttendanceScheduler {
-  /**
-   * Start the scheduler that runs every 30 minutes
-   * Workflow:
-   * 1. Login to external API and get bearer token
-   * 2. Store token in database
-   * 3. Fetch employee calendar data
-   * 4. Extract today's attendance
-   * 5. Save to database
-   */
+
   static startScheduler() {
-    // Run every 5 minutes - cron pattern: */5 * * * *
     const task = cron.schedule('*/5 * * * *', async () => {
       schedulerLogger.info(`Running scheduled job at ${new Date().toLocaleString()}`);
       await this.syncAttendance();
     });
 
-    // Also run once when server starts
     schedulerLogger.info('Starting scheduler - first run will execute immediately');
     this.syncAttendance();
 
     return task;
   }
 
-  /**
-   * Main sync function that orchestrates the entire process
-   */
-  static async syncAttendance() {
+  // ✅ UPDATED FUNCTION
+  static async syncAttendance(customDate = null) {
     try {
       schedulerLogger.info('Starting attendance sync process');
 
-      // Get all employees
+      // ✅ use custom date OR today
+      let targetDate = customDate ? new Date(customDate) : new Date();
+
+      const todayString = targetDate.toISOString().split('T')[0];
+      const mmyy =
+        String(targetDate.getMonth() + 1).padStart(2, '0') +
+        targetDate.getFullYear();
+
+      schedulerLogger.info(`📅 Syncing for date: ${todayString}`);
+
       const employees = await ExternalAPIService.getActiveEmployees();
-      schedulerLogger.info(`Found ${employees.length} employees to sync`);
 
       if (employees.length === 0) {
         schedulerLogger.warn('No employees found to sync');
         return;
       }
 
-      // Get credentials from environment
-      const empCode = "400049";//process.env.EXTERNAL_API_EMPCODE;
-      const empPassword = "Myname@@123";//process.env.EXTERNAL_API_EMPPASSWORD;
-      const empCompany = "GPIL";//process.env.EXTERNAL_API_COMPANY;
+      const empCode = "400049";
+      const empPassword = "Myname@@123";
+      const empCompany = "GPIL";
 
-      if (!empCode || !empPassword || !empCompany) {
-        schedulerLogger.error('External API credentials not configured in environment variables (EXTERNAL_API_EMPCODE, EXTERNAL_API_EMPPASSWORD, EXTERNAL_API_COMPANY required)');
-        return;
-      }
-
-      // Step 1: Login and get bearer token
       let bearerToken;
+
       try {
-        bearerToken = await ExternalAPIService.loginAndGetToken(empCode, empPassword, empCompany);
-        schedulerLogger.info('Successfully logged in to external API');
+        bearerToken = await ExternalAPIService.loginAndGetToken(
+          empCode,
+          empPassword,
+          empCompany
+        );
       } catch (error) {
-        schedulerLogger.error(`Failed to login to external API: ${error.message}`);
+        schedulerLogger.error(`Login failed: ${error.message}`);
         return;
       }
 
-      // Get today's date and format for API call
-      const today = new Date();
-      const todayString = today.toISOString().split('T')[0]; // YYYY-MM-DD
-      const mmyy = String(today.getMonth() + 1).padStart(2, '0') + today.getFullYear(); // MMYYYY
-
-      // Step 2: Sync attendance for each employee using their Genus employee code
       for (const employee of employees) {
-  schedulerLogger.info(`👉 Processing employee: ${employee.name} (ID: ${employee.id}, Code: ${employee.employee_code})`);
+        try {
+          if (!employee.employee_code) continue;
 
-  try {
-    // Check employee code
-    if (!employee.employee_code) {
-      schedulerLogger.warn(`⛔ Skipping ${employee.name}: No employee_code`);
-      continue;
-    }
-
-    await this.syncEmployeeAttendance(
-      employee.id,
-      employee.name,
-      employee.employee_code,
-      bearerToken,
-      mmyy,
-      todayString
-    );
-
-    schedulerLogger.info(`✅ Finished employee: ${employee.name}`);
-
-  } catch (error) {
-    schedulerLogger.error(`❌ Error syncing ${employee.name}: ${error.message}`);
-  }
-}
+          await this.syncEmployeeAttendance(
+            employee.id,
+            employee.name,
+            employee.employee_code,
+            bearerToken,
+            mmyy,
+            todayString
+          );
+        } catch (error) {
+          schedulerLogger.error(`Error syncing ${employee.name}: ${error.message}`);
+        }
+      }
 
       schedulerLogger.info('Attendance sync process completed');
+
     } catch (error) {
-      schedulerLogger.error(`Unexpected error in sync process: ${error.message}`, { stack: error.stack });
+      schedulerLogger.error(`Unexpected error: ${error.message}`);
     }
   }
 
-  /**
-   * Sync attendance for a single employee
-   * @param {number} employeeId - Employee ID
-   * @param {string} employeeName - Employee name
-   * @param {string} employeeCode - Employee code from Genus system
-   * @param {string} bearerToken - Bearer token
-   * @param {string} mmyy - Month in MMYYYY format
-   * @param {string} todayString - Today's date in YYYY-MM-DD format
-   */
-  static async syncEmployeeAttendance(employeeId, employeeName, employeeCode, bearerToken, mmyy, todayString) {
+  static async syncEmployeeAttendance(
+    employeeId,
+    employeeName,
+    employeeCode,
+    bearerToken,
+    mmyy,
+    todayString
+  ) {
     try {
-      // Step 1: Fetch employee calendar data
-      schedulerLogger.debug(`Fetching calendar data for ${employeeName} (code: ${employeeCode}, month ${mmyy})`);
-      
       let calendarData;
-      try {
-        schedulerLogger.info(`📡 Calling API for ${employeeName} (${employeeCode})`);
 
+      try {
         calendarData = await ExternalAPIService.getEmployeeCalendar(
           employeeCode,
           bearerToken,
           mmyy
         );
-
-        schedulerLogger.info(`📥 API response received for ${employeeName}`);
-
       } catch (apiError) {
-        // Skip employee if API returns 404 or other fetch errors
-        if (apiError.response?.status === 404) {
-          schedulerLogger.warn(`Skipping ${employeeName}: Employee code ${employeeCode} not found in Genus system (404)`);
-        } else if (apiError.response?.status === 401) {
-          schedulerLogger.warn(`Skipping ${employeeName}: Authentication failed (401) - token may be expired`);
-        } else {
-          schedulerLogger.warn(`Skipping ${employeeName}: Failed to fetch calendar data - ${apiError.message}`);
-        }
-        schedulerLogger.error(`🚨 API FAILED for ${employeeName}: ${apiError.message}`);
+        schedulerLogger.error(`API failed for ${employeeName}: ${apiError.message}`);
         return;
       }
 
-      // Step 2: Extract today's attendance from the calendar data
-      const todayAttendance = ExternalAPIService.extractTodayAttendance(calendarData, todayString);
+      const attendance =
+        ExternalAPIService.extractTodayAttendance(calendarData, todayString);
 
-      schedulerLogger.info(`📊 Extracted attendance for ${employeeName}: ${JSON.stringify(todayAttendance)}`);
-
-      if (todayAttendance) {
-        // Step 3: Save to database
-        schedulerLogger.info(`💾 Saving attendance for ${employeeName}`);
-
+      if (attendance) {
         await ExternalAPIService.saveAttendance(
           employeeId,
           employeeCode,
           todayString,
-          todayAttendance
+          attendance
         );
-        schedulerLogger.info(`Attendance synced for ${employeeName} on ${todayString}: status=${todayAttendance.status}`);
-      } else {
-        schedulerLogger.warn(`No attendance data found for ${employeeName} on ${todayString}`);
       }
+
     } catch (error) {
-      schedulerLogger.error(`Error syncing ${employeeName}: ${error.message}`, { stack: error.stack });
-      throw error;
+      schedulerLogger.error(`Error syncing ${employeeName}: ${error.message}`);
     }
   }
 
-  /**
-   * Stop the scheduler
-   */
   static stopScheduler(task) {
     if (task) {
       task.stop();
-      schedulerLogger.info('Scheduler stopped gracefully');
     }
   }
 }

@@ -856,6 +856,39 @@ app.get('/api/external-attendance', async (req, res) => {
   }
 });
 
+// 🔔 External cron trigger (IMPORTANT)
+app.get('/run-attendance-job', async (req, res) => {
+  try {
+    const date = req.query.date;
+
+    logger.info("🔔 External cron triggered at " + new Date());
+
+    if (date && isNaN(new Date(date))) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid date format. Use YYYY-MM-DD"
+      });
+    }
+
+    await AttendanceScheduler.syncAttendance(date);
+
+    res.json({
+      success: true,
+      message: date
+        ? `Attendance synced for ${date}`
+        : "Attendance synced for today",
+      date: date || new Date().toISOString().split('T')[0]
+    });
+
+  } catch (error) {
+    logger.error("❌ Job failed: " + error.message);
+    res.status(500).json({
+      success: false,
+      error: error.message
+    });
+  }
+});
+
 // Start server
 let schedulerTask;
 app.listen(PORT, () => {
@@ -864,10 +897,11 @@ app.listen(PORT, () => {
   logger.info('Database: PostgreSQL (Neon)');
 
   // Start the attendance scheduler
-  logger.info('===== Starting Attendance Scheduler =====');
+  //logger.info('===== Starting Attendance Scheduler =====');
   try {
-  schedulerTask = AttendanceScheduler.startScheduler();
-  logger.info('Scheduler started successfully');
+  //schedulerTask = AttendanceScheduler.startScheduler();
+  //logger.info('Scheduler started successfully');
+  logger.info('⚠️ Scheduler disabled (using external cron)');
 } catch (err) {
   logger.error('Scheduler failed to start:', err);
 }
