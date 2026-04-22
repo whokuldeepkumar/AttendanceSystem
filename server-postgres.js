@@ -31,6 +31,26 @@ app.get('/health', (req, res) => {
   res.json({ status: 'ok', message: 'Server is running' });
 });
 
+// 🔍 Test external API connectivity
+app.get('/test-external', async (req, res) => {
+  const axios = require('axios');
+
+  try {
+    const response = await axios.get('https://apps.genus.in');
+
+    console.log("✅ External API reachable");
+    res.send("SUCCESS - External API reachable");
+
+  } catch (e) {
+    console.error("❌ External API failed:", e.message);
+
+    res.send({
+      success: false,
+      error: e.message
+    });
+  }
+});
+
 // ==================== EMPLOYEES ====================
 
 // GET /api/employees - Get all employees
