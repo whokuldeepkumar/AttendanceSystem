@@ -83,7 +83,8 @@ class ExternalAPIService {
           headers: {
             'Authorization': `Bearer ${bearerToken}`,
             'Content-Type': 'application/x-www-form-urlencoded'
-          }
+          },
+          timeout: 30000 // 15 seconds
         }
       );
 

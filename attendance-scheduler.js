@@ -1,6 +1,7 @@
 const cron = require('node-cron');
 const ExternalAPIService = require('./external-api-service');
 const { schedulerLogger } = require('./logger');
+let isJobRunning = false;
 
 class AttendanceScheduler {
 
@@ -18,7 +19,18 @@ class AttendanceScheduler {
 
   // ✅ UPDATED FUNCTION
   static async syncAttendance(customDate = null) {
-    try {
+   
+
+      if (isJobRunning) {
+    schedulerLogger.warn("⚠️ Job already running, skipping...");
+    return;
+  }
+
+   try {
+  isJobRunning = true;
+
+  
+
       schedulerLogger.info('Starting attendance sync process');
 
       // ✅ use custom date OR today
@@ -77,8 +89,10 @@ class AttendanceScheduler {
 
     } catch (error) {
       schedulerLogger.error(`Unexpected error: ${error.message}`);
-    }
+  } finally {
+    isJobRunning = false;
   }
+}
 
   static async syncEmployeeAttendance(
     employeeId,
