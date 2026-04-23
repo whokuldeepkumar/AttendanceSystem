@@ -224,13 +224,17 @@ class ExternalAPIService {
       const checkResult = await pool.query(checkQuery, [employeeId, attendanceDate]);
 
       // If attendance exists and has punch times, don't overwrite from biometric system
-      if (checkResult.rows.length > 0) {
-        const existing = checkResult.rows[0];
-        if (existing.in_time || existing.out_time) {
-          apiLogger.info(`Attendance not updated for employee ${employeeCode}: Already punched in app on ${attendanceDate}`);
-          return; // Skip updating attendance from biometric API
-        }
-      }
+      let existing = null;
+
+if (checkResult.rows.length > 0) {
+  existing = checkResult.rows[0];
+
+  // 🔒 already complete → skip
+  if (existing.in_time && existing.out_time) {
+    apiLogger.info(`Attendance already complete for ${employeeCode}`);
+    return;
+  }
+}
 
       // Step 3: Save to main attendance table with punch times (only if not already punched)
       // Build complete TIMESTAMP values: attendanceDate + HH:MM:00
@@ -262,6 +266,11 @@ class ExternalAPIService {
 
       let duration = null;
 
+      if (existing && existing.out_time && !outTime) {
+  apiLogger.info(`Skipping downgrade for ${employeeCode}`);
+  return;
+}
+
 if (attendanceRecord.totalMinutes && parseInt(attendanceRecord.totalMinutes) > 0) {
   const totalMinutes = parseInt(attendanceRecord.totalMinutes);
 
@@ -273,13 +282,29 @@ if (attendanceRecord.totalMinutes && parseInt(attendanceRecord.totalMinutes) > 0
 
       // Only insert if record doesn't exist, or update only if in_time and out_time are NULL
       const attQuery = `
-        INSERT INTO attendance (user_id, date, in_time, out_time, duration)
-        VALUES ($1, $2, $3, $4, $5)
-        ON CONFLICT (user_id, date)
-        DO UPDATE SET in_time = COALESCE(attendance.in_time, $3), 
-                      out_time = COALESCE(attendance.out_time, $4),
-                      duration = COALESCE(attendance.duration, $5)
-      `;
+  INSERT INTO attendance (user_id, date, in_time, out_time, duration)
+  VALUES ($1, $2, $3, $4, $5)
+
+  ON CONFLICT (user_id, date)
+  DO UPDATE SET
+    in_time = COALESCE(attendance.in_time, EXCLUDED.in_time),
+
+    out_time = CASE
+      WHEN EXCLUDED.out_time IS NOT NULL
+     AND (
+       attendance.out_time IS NULL
+       OR EXCLUDED.out_time > attendance.out_time
+     )
+      THEN EXCLUDED.out_time
+      ELSE attendance.out_time
+    END,
+
+    duration = CASE
+      WHEN EXCLUDED.duration IS NOT NULL
+      THEN EXCLUDED.duration
+      ELSE attendance.duration
+    END
+`;
       await pool.query(attQuery, [employeeId, finalDate, inTime, outTime, duration]);
       apiLogger.info(`Attendance saved for employee ${employeeCode}: inTime=${inTime}, outTime=${outTime}, date=${finalDate}`);
     } catch (error) {
