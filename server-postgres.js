@@ -56,7 +56,7 @@ app.get('/test-external', async (req, res) => {
 // GET /api/employees - Get all employees
 app.get('/api/employees', async (req, res) => {
   try {
-    const result = await pool.query('SELECT id, name, mobile, password FROM employees ORDER BY id');
+    const result = await pool.query('SELECT id, name, mobile, password, employee_code FROM employees ORDER BY id');
     res.json(result.rows);
   } catch (error) {
     console.error('Error fetching employees:', error);
